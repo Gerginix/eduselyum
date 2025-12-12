@@ -1,20 +1,21 @@
-/* =========================
-   FREYA — YKS Puan + Sıralama (CSV)
-   Repo kökünde bu dosyalar olmalı:
-   /say.csv  /ea.csv  /soz.csv  /dil.csv
-   ========================= */
+// =======================
+// FREYA - app.js (PUAN + SIRALAMA)
+// CSV mantığı: floor(puan) -> exact yoksa en yakın ALT puan
+// Gerekli dosyalar repo root'ta: say.csv, ea.csv, soz.csv, dil.csv
+// =======================
 
 function readNumber(id) {
   const el = document.getElementById(id);
   if (!el) return 0;
   const raw = (el.value ?? "").toString().trim();
+  if (!raw) return 0;
   const normalized = raw.replace(",", ".");
   const n = Number(normalized);
   return Number.isFinite(n) ? n : 0;
 }
 function round3(x) { return Math.round(x * 1000) / 1000; }
 
-/* ====== Katsayılar (Excel: Katsayılar_2025 sheet) ====== */
+// Excel: Katsayılar_2025 tablosu
 const COEF = {
   EA:  { intercept:128.028, obp:0.60285, TR:1.16424, SB:1.33609, TM:1.44715, FB:1.02141,
          AYT_MAT:2.88393, FIZ:0, KIM:0, BIO:0, EDEB:2.97424, TAR1:2.39932, COG1:2.85842,
@@ -51,11 +52,9 @@ function calcScore(tur, x) {
     c.FELS * x.ayt_fels +
     c.DKAB * x.ayt_dkab +
     c.YDIL * x.ydt;
-
   return round3(p);
 }
 
-/* ====== Görünürlük ====== */
 function showOnlyGroup(tur) {
   const gSay = document.getElementById("grp_say");
   const gEa  = document.getElementById("grp_ea");
@@ -67,72 +66,148 @@ function showOnlyGroup(tur) {
   if (gDil) gDil.style.display = (tur === "DIL") ? "" : "none";
 }
 
-/* ====== CSV -> Map( puanInt => {min,max} ) ======
-   - Header varsa otomatik atlar
-   - 1. sütun puan, 2. sütun min, 3. sütun max kabul eder
-*/
-function parseCSVToMap(csvText) {
-  const map = new Map();
-  const lines = (csvText || "")
-    .split(/\r?\n/)
-    .map(l => l.trim())
-    .filter(Boolean);
+// -----------------------
+// SIRALAMA (CSV) YÜKLEME
+// -----------------------
+const CSV_URL = {
+  SAY: "say.csv",
+  EA:  "ea.csv",
+  SOZ: "soz.csv",
+  DIL: "dil.csv",
+};
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    const parts = line.split(",").map(s => s.trim());
+// cache: tur -> {scores:int[], map: Map<int, {min,max}>}
+const RANK_CACHE = new Map();
 
+function parseCSV(text) {
+  // Basit CSV (virgül/ noktalı virgül toleranslı, TR binlik nokta toleranslı)
+  // Header varsa yakalar; yoksa kolon pozisyonundan gider.
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  if (lines.length < 2) return [];
+
+  // delimiter tahmini
+  const delim = (lines[0].includes(";") && !lines[0].includes(",")) ? ";" : ",";
+
+  const toNum = (v) => {
+    if (v == null) return NaN;
+    const s = String(v).trim().replaceAll(".", "").replace(",", ".");
+    const n = Number(s);
+    return Number.isFinite(n) ? n : NaN;
+  };
+
+  const headerParts = lines[0].split(delim).map(s => s.trim().toLowerCase());
+  const hasHeader = headerParts.some(h => ["puan","score","min","max","min_sira","max_sira","minsira","maxsira"].includes(h));
+
+  let start = 0;
+  let idxP = 0, idxMin = 1, idxMax = 2;
+
+  if (hasHeader) {
+    start = 1;
+    const findAny = (arr) => headerParts.findIndex(h => arr.includes(h));
+    idxP   = findAny(["puan","score"]);
+    idxMin = findAny(["min","min_sira","minsira","min sıra","min_sıra"]);
+    idxMax = findAny(["max","max_sira","maxsira","max sıra","max_sıra"]);
+    // Fallback: bulamazsa pozisyonel
+    if (idxP < 0) idxP = 0;
+    if (idxMin < 0) idxMin = 1;
+    if (idxMax < 0) idxMax = 2;
+  } else {
+    // Senin sheet görüntüsüne göre: A=PUAN, D=MIN, E=MAX gibi durumlar var.
+    // CSV üretiminde genelde 3 kolon olur; ama 4-5 kolon olursa:
+    // 1) ilk kolon puan
+    // 2) son iki kolon min/max
+    start = 0;
+  }
+
+  const rows = [];
+  for (let i = start; i < lines.length; i++) {
+    const parts = lines[i].split(delim).map(s => s.trim());
     if (parts.length < 3) continue;
 
-    // Header yakala: ilk hücre sayı değilse atla
-    const puanMaybe = Number(parts[0].replace(",", "."));
-    if (!Number.isFinite(puanMaybe)) continue;
+    let puan = NaN, min = NaN, max = NaN;
 
-    const puan = Math.floor(puanMaybe);
+    if (hasHeader) {
+      puan = toNum(parts[idxP]);
+      min  = toNum(parts[idxMin]);
+      max  = toNum(parts[idxMax]);
+    } else {
+      puan = toNum(parts[0]);
+      // son iki kolon min/max varsay
+      min = toNum(parts[parts.length - 2]);
+      max = toNum(parts[parts.length - 1]);
+      // Eğer bu da NaN ise D/E (3/4) dene
+      if (!Number.isFinite(min) || !Number.isFinite(max)) {
+        if (parts.length >= 5) {
+          min = toNum(parts[3]);
+          max = toNum(parts[4]);
+        }
+      }
+    }
 
-    // min/max sayıları: binlik ayırıcı vs. olabilir diye sadece rakam bırak
-    const minStr = parts[1];
-    const maxStr = parts[2];
-
-    const min = Number(String(minStr).replace(/\./g, "").replace(/\s/g, "").replace(",", "."));
-    const max = Number(String(maxStr).replace(/\./g, "").replace(/\s/g, "").replace(",", "."));
-
-    if (!Number.isFinite(min) || !Number.isFinite(max)) continue;
-
-    map.set(puan, { min: Math.trunc(min), max: Math.trunc(max) });
+    if (!Number.isFinite(puan) || !Number.isFinite(min) || !Number.isFinite(max)) continue;
+    rows.push({ puan: Math.trunc(puan), min: Math.trunc(min), max: Math.trunc(max) });
   }
-  return map;
+  return rows;
 }
 
-async function loadRankMap(url) {
-  const res = await fetch(url, { cache: "no-store" });
-  if (!res.ok) throw new Error(`CSV yüklenemedi: ${url} (${res.status})`);
+async function loadRanks(tur) {
+  if (RANK_CACHE.has(tur)) return RANK_CACHE.get(tur);
+
+  const url = CSV_URL[tur];
+  if (!url) return null;
+
+  // Cache-bust: commit sonrası bazen eski dosyayı tutuyor
+  const res = await fetch(`${url}?v=${Date.now()}`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`${tur} CSV yüklenemedi: ${res.status}`);
   const text = await res.text();
-  return parseCSVToMap(text);
+  const rows = parseCSV(text);
+
+  const map = new Map();
+  for (const r of rows) map.set(r.puan, { min: r.min, max: r.max });
+
+  const scores = Array.from(map.keys()).sort((a,b) => a-b);
+  const data = { scores, map };
+  RANK_CACHE.set(tur, data);
+  return data;
 }
 
-/* Excel mantığı: AŞAĞIYUVARLA(puan) yoksa alt puana in */
-function findNearestLower(map, puan) {
-  let p = Math.floor(puan);
-  while (p >= 0 && !map.has(p)) p--;
-  return map.get(p) || null;
+function findFloorKey(sortedArr, key) {
+  // sortedArr: ascending int[]
+  // return greatest value <= key, or null
+  let lo = 0, hi = sortedArr.length - 1;
+  if (hi < 0) return null;
+  if (key < sortedArr[0]) return null;
+  if (key >= sortedArr[hi]) return sortedArr[hi];
+
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    const v = sortedArr[mid];
+    if (v === key) return v;
+    if (v < key) lo = mid + 1;
+    else hi = mid - 1;
+  }
+  // hi son <= key
+  return hi >= 0 ? sortedArr[hi] : null;
 }
 
-/* ====== Global rank map’ler ====== */
-let SAY_MAP = null;
-let EA_MAP  = null;
-let SOZ_MAP = null;
-let DIL_MAP = null;
+async function getMinMaxSira(tur, puanFloat) {
+  const data = await loadRanks(tur);
+  if (!data) return null;
 
-function getMapByTur(tur) {
-  if (tur === "SAY") return SAY_MAP;
-  if (tur === "EA")  return EA_MAP;
-  if (tur === "SOZ") return SOZ_MAP;
-  if (tur === "DIL") return DIL_MAP;
-  return null;
+  const key = Math.floor(puanFloat); // Excel: AŞAĞIYUVARLA
+  const exact = data.map.get(key);
+  if (exact) return exact;
+
+  // Excel'deki "en yakın alt puan" davranışı (senin istediğin)
+  const floorKey = findFloorKey(data.scores, key);
+  if (floorKey == null) return null;
+  return data.map.get(floorKey) ?? null;
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
+// -----------------------
+// UI
+// -----------------------
+document.addEventListener("DOMContentLoaded", () => {
   const turSelect = document.getElementById("puanTuru");
   const btn = document.getElementById("hesaplaBtn");
   const sonuc = document.getElementById("sonuc");
@@ -140,30 +215,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (!turSelect || !btn || !sonuc || !siraEl) return;
 
-  // CSV’leri arka planda yükle (site ilk açılınca)
-  // Dosya isimleri: say.csv / ea.csv / soz.csv / dil.csv
-  // Repo root’ta durmalı.
-  try {
-    [SAY_MAP, EA_MAP, SOZ_MAP, DIL_MAP] = await Promise.all([
-      loadRankMap("say.csv"),
-      loadRankMap("ea.csv"),
-      loadRankMap("soz.csv"),
-      loadRankMap("dil.csv"),
-    ]);
-  } catch (e) {
-    console.warn(e);
-    // CSV gelmezse yine de puan çalışsın; sırayı "—" basar
-  }
-
   showOnlyGroup(turSelect.value);
 
   turSelect.addEventListener("change", () => {
     showOnlyGroup(turSelect.value);
     sonuc.textContent = "—";
-    siraEl.textContent = "Min Sıra: — | Max Sıra: —";
+    siraEl.textContent = "—";
   });
 
-  btn.addEventListener("click", () => {
+  btn.addEventListener("click", async () => {
     const tur = turSelect.value;
 
     // Ortak
@@ -202,22 +262,22 @@ document.addEventListener("DOMContentLoaded", async () => {
       x.ydt = readNumber("ydt");
     }
 
+    // 1) PUAN (bunu ASLA bozmayacağız)
     const puan = calcScore(tur, x);
     sonuc.textContent = `${tur} Puan: ${puan.toFixed(3)}`;
 
-    const map = getMapByTur(tur);
-
-    if (!map || map.size === 0) {
-      siraEl.textContent = "Min Sıra: — | Max Sıra: —";
-      return;
+    // 2) SIRALAMA
+    try {
+      const mm = await getMinMaxSira(tur, puan);
+      if (!mm) {
+        siraEl.textContent = `Min Sıra: — | Max Sıra: —`;
+      } else {
+        siraEl.textContent = `Min Sıra: ${mm.min.toLocaleString("tr-TR")} | Max Sıra: ${mm.max.toLocaleString("tr-TR")}`;
+      }
+    } catch (e) {
+      // CSV yolu / isim / format hatası olursa burada görünür
+      console.error(e);
+      siraEl.textContent = `Min Sıra: — | Max Sıra: —`;
     }
-
-    const row = findNearestLower(map, puan);
-    if (!row) {
-      siraEl.textContent = "Min Sıra: — | Max Sıra: —";
-      return;
-    }
-
-    siraEl.textContent = `Min Sıra: ${row.min.toLocaleString("tr-TR")} | Max Sıra: ${row.max.toLocaleString("tr-TR")}`;
   });
 });
