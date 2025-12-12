@@ -2,12 +2,13 @@
 <html lang="tr">
 <head>
   <meta charset="utf-8" />
-  <title>FREYA – YKS Puan Motoru</title>
+  <title>umutsahin.tr YKS 2025 PUAN VE SIRA SİMÜLATÖRÜ</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <style>
     :root{
-      --page-w: 380px;        /* 760px'in ~1/2'si; senin "1/4 oran" görsel hedefin bu ölçek */
-      --control-w: 260px;     /* input/select/button genişliği */
+      --page-w: 380px;      /* tüm sayfa genişliği */
+      --control-w: 260px;   /* input / select / buton */
       --radius: 10px;
     }
 
@@ -18,9 +19,20 @@
       padding: 10px;
     }
 
-    h1{ text-align:center; margin: 6px 0 14px; }
+    h1{
+      text-align:center;
+      margin: 6px 0 10px;
+      font-size: 22px;
+    }
 
-    /* Hepsini tek kolon, ortalı */
+    .subtitle{
+      text-align:center;
+      font-size: 13px;
+      color:#333;
+      line-height:1.45;
+      margin-bottom:16px;
+    }
+
     label{
       font-weight:700;
       display:block;
@@ -28,70 +40,40 @@
       width: var(--control-w);
       margin-left:auto;
       margin-right:auto;
-      font-size: 14px;
+      font-size:14px;
     }
 
-    .hint{
-      font-size:12px;
-      color:#555;
-      margin-top:6px;
-      width: var(--control-w);
-      margin-left:auto;
-      margin-right:auto;
-    }
-
-    /* Puan türü + OBP + tüm inputlar */
     input, select{
       width: var(--control-w);
-      padding: 8px 10px;
-      margin-top: 6px;
+      padding:8px;
+      margin-top:6px;
+      display:block;
       margin-left:auto;
       margin-right:auto;
-      display:block;
-      box-sizing:border-box;
-      text-align:center;
-    }
-
-    /* Grupların dış çerçevesi de daralsın */
-    .grp{
-      border:1px solid #ddd;
-      border-radius: var(--radius);
-      padding: 12px 10px 14px;
-      margin: 14px auto 0;
-      width: var(--control-w);     /* ÇERÇEVEYİ de input ile aynı genişlikte yap */
-      box-sizing:border-box;
-    }
-
-    .grp b{
-      display:block;
-      margin-bottom: 4px;
-      text-align:left;
-      font-size: 14px;
-    }
-
-    /* Grup içindeki label'ları kutunun içine oturt */
-    .grp label{
-      width: 100%;
-      margin-left:0;
-      margin-right:0;
-      text-align:left;
-      font-size: 13px;   /* biraz küçült */
-    }
-
-    /* Grup içindeki inputlar: %100 (kutunun genişliğini zaten daralttık) */
-    .grp input[type="number"]{
-      width: 100%;
       text-align:center;
     }
 
     button{
       width: var(--control-w);
-      padding: 12px;
-      margin: 16px auto 0;
-      display:block;
-      font-size: 15px;
+      padding:12px;
+      margin:14px auto 0;
+      font-size:16px;
       font-weight:700;
-      box-sizing:border-box;
+      display:block;
+    }
+
+    .grp{
+      border:1px solid #ddd;
+      border-radius: var(--radius);
+      padding:10px;
+      margin-top:12px;
+    }
+
+    .grp b{
+      display:block;
+      text-align:center;
+      font-size:14px;
+      margin-bottom:6px;
     }
 
     #sonuc{
@@ -100,86 +82,101 @@
       font-weight:800;
       text-align:center;
     }
+
     #sira{
-      margin-top:10px;
+      margin-top:8px;
       font-size:16px;
       font-weight:700;
       text-align:center;
     }
 
-    /* MOBİL: Daraltma yok, tam genişlik */
-    @media (max-width: 520px){
+    .hint{
+      font-size:12px;
+      color:#555;
+      margin-top:6px;
+      text-align:center;
+    }
+
+    /* Mobil uyum */
+    @media (max-width: 420px){
       :root{
         --page-w: 92vw;
-        --control-w: 92vw;
+        --control-w: 85%;
       }
-      label{ font-size: 15px; }
-      .grp b{ font-size: 15px; }
-      .grp label{ font-size: 14px; }
     }
   </style>
 </head>
 
 <body>
 
-  <h1>FREYA – YKS Puan Motoru</h1>
+<h1>umutsahin.tr YKS 2025 PUAN VE SIRA SİMÜLATÖRÜ</h1>
 
-  <label>Puan Türü</label>
-  <select id="puanTuru">
-    <option value="SAY">SAY</option>
-    <option value="EA">EA</option>
-    <option value="SOZ">SÖZ</option>
-    <option value="DIL">DİL</option>
-  </select>
+<div class="subtitle">
+  2026 YKS hazırlığınızı sürdürürken deneme sınavlarında ürettiğiniz netlerin,
+  sizi 2025 YKS'de kaç puanla hangi puan türünde kaçıncı yapacağını görmek için
+  bu PUAN ve SIRALAMA simülatörünü yıl boyunca kullanmaya devam edin.
+  <br><br>
+  OBP kısmına güncel OBP'nizi yazarak 2025 YKS YERLEŞTİRME PUANINIZI ve
+  SIRALAMANIZI %99,5 oranında doğru hesaplayacaktır.
+</div>
 
-  <label>OBP (0–100)</label>
-  <input id="obp" type="number" step="0.01" placeholder="Örn: 85,50" />
-  <div class="hint">Virgül veya nokta ile yazabilirsin.</div>
+<label>Puan Türü</label>
+<select id="puanTuru">
+  <option value="SAY">SAY</option>
+  <option value="EA">EA</option>
+  <option value="SOZ">SÖZ</option>
+  <option value="DIL">DİL</option>
+</select>
 
-  <div class="grp">
-    <b>TYT Netleri</b>
-    <label>TYT Türkçe</label><input id="tyt_tr" type="number" step="0.25" />
-    <label>TYT Sosyal</label><input id="tyt_sos" type="number" step="0.25" />
-    <label>TYT Matematik</label><input id="tyt_mat" type="number" step="0.25" />
-    <label>TYT Fen</label><input id="tyt_fen" type="number" step="0.25" />
-  </div>
+<label>OBP (0–100)</label>
+<input id="obp" type="number" step="0.01" placeholder="Örn: 85,50" />
+<div class="hint">Virgül veya nokta ile yazabilirsin.</div>
 
-  <div id="grp_say" class="grp">
-    <b>AYT (SAY)</b>
-    <label>AYT Matematik</label><input id="ayt_mat" type="number" step="0.25" />
-    <label>AYT Fizik</label><input id="ayt_fiz" type="number" step="0.25" />
-    <label>AYT Kimya</label><input id="ayt_kim" type="number" step="0.25" />
-    <label>AYT Biyoloji</label><input id="ayt_bio" type="number" step="0.25" />
-  </div>
+<div class="grp">
+  <b>TYT Netleri</b>
+  <label>TYT Türkçe</label><input id="tyt_tr" type="number" step="0.25" />
+  <label>TYT Sosyal</label><input id="tyt_sos" type="number" step="0.25" />
+  <label>TYT Matematik</label><input id="tyt_mat" type="number" step="0.25" />
+  <label>TYT Fen</label><input id="tyt_fen" type="number" step="0.25" />
+</div>
 
-  <div id="grp_ea" class="grp" style="display:none">
-    <b>AYT (EA)</b>
-    <label>AYT Matematik</label><input id="ayt_mat_ea" type="number" step="0.25" />
-    <label>AYT Edebiyat</label><input id="ayt_edeb" type="number" step="0.25" />
-    <label>AYT Tarih-1</label><input id="ayt_tar1" type="number" step="0.25" />
-    <label>AYT Coğrafya-1</label><input id="ayt_cog1" type="number" step="0.25" />
-  </div>
+<div id="grp_say" class="grp">
+  <b>AYT (SAY)</b>
+  <label>AYT Matematik</label><input id="ayt_mat" type="number" step="0.25" />
+  <label>AYT Fizik</label><input id="ayt_fiz" type="number" step="0.25" />
+  <label>AYT Kimya</label><input id="ayt_kim" type="number" step="0.25" />
+  <label>AYT Biyoloji</label><input id="ayt_bio" type="number" step="0.25" />
+</div>
 
-  <div id="grp_soz" class="grp" style="display:none">
-    <b>AYT (SÖZ)</b>
-    <label>AYT Edebiyat</label><input id="ayt_edeb_soz" type="number" step="0.25" />
-    <label>AYT Tarih-1</label><input id="ayt_tar1_soz" type="number" step="0.25" />
-    <label>AYT Coğrafya-1</label><input id="ayt_cog1_soz" type="number" step="0.25" />
-    <label>AYT Tarih-2</label><input id="ayt_tar2" type="number" step="0.25" />
-    <label>AYT Coğrafya-2</label><input id="ayt_cog2" type="number" step="0.25" />
-    <label>AYT Felsefe Grubu</label><input id="ayt_fels" type="number" step="0.25" />
-    <label>AYT DKAB</label><input id="ayt_dkab" type="number" step="0.25" />
-  </div>
+<div id="grp_ea" class="grp" style="display:none">
+  <b>AYT (EA)</b>
+  <label>AYT Matematik</label><input id="ayt_mat_ea" type="number" step="0.25" />
+  <label>AYT Edebiyat</label><input id="ayt_edeb" type="number" step="0.25" />
+  <label>AYT Tarih-1</label><input id="ayt_tar1" type="number" step="0.25" />
+  <label>AYT Coğrafya-1</label><input id="ayt_cog1" type="number" step="0.25" />
+</div>
 
-  <div id="grp_dil" class="grp" style="display:none">
-    <b>YDT (DİL)</b>
-    <label>YDT Net</label><input id="ydt" type="number" step="0.25" />
-  </div>
+<div id="grp_soz" class="grp" style="display:none">
+  <b>AYT (SÖZ)</b>
+  <label>AYT Edebiyat</label><input id="ayt_edeb_soz" type="number" step="0.25" />
+  <label>AYT Tarih-1</label><input id="ayt_tar1_soz" type="number" step="0.25" />
+  <label>AYT Coğrafya-1</label><input id="ayt_cog1_soz" type="number" step="0.25" />
+  <label>AYT Tarih-2</label><input id="ayt_tar2" type="number" step="0.25" />
+  <label>AYT Coğrafya-2</label><input id="ayt_cog2" type="number" step="0.25" />
+  <label>AYT Felsefe Grubu</label><input id="ayt_fels" type="number" step="0.25" />
+  <label>AYT DKAB</label><input id="ayt_dkab" type="number" step="0.25" />
+</div>
 
-  <button id="hesaplaBtn">HESAPLA</button>
-  <div id="sonuc">—</div>
-  <div id="sira">—</div>
+<div id="grp_dil" class="grp" style="display:none">
+  <b>YDT (DİL)</b>
+  <label>YDT Net</label><input id="ydt" type="number" step="0.25" />
+</div>
 
-  <script src="app.js"></script>
+<button id="hesaplaBtn">HESAPLA</button>
+
+<div id="sonuc">—</div>
+<div id="sira">—</div>
+
+<script src="app.js"></script>
 </body>
 </html>
