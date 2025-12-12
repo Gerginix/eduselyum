@@ -1,5 +1,7 @@
 function readNumber(id) {
-  const raw = (document.getElementById(id)?.value ?? "").toString().trim();
+  const el = document.getElementById(id);
+  if (!el) return 0;
+  const raw = (el.value ?? "").toString().trim();
   const normalized = raw.replace(",", ".");
   const n = Number(normalized);
   return Number.isFinite(n) ? n : 0;
@@ -120,65 +122,96 @@ function hesaplaPuan(tur, input) {
   return round3(p);
 }
 
-function setVisible(id, show) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.style.display = show ? "" : "none";
+// (Şimdilik) sıralama alanını boş bırakıyoruz.
+// Excel'deki min/max sıra formülünü foto ile aldığımız anda burayı birebir dolduracağız.
+function hesaplaSiraPlaceholder(tur, puan) {
+  return null;
+}
+
+function showOnlyGroup(tur) {
+  const gSay = document.getElementById("grp_say");
+  const gEa = document.getElementById("grp_ea");
+  const gSoz = document.getElementById("grp_soz");
+  const gDil = document.getElementById("grp_dil");
+
+  if (gSay) gSay.style.display = tur === "SAY" ? "" : "none";
+  if (gEa) gEa.style.display = tur === "EA" ? "" : "none";
+  if (gSoz) gSoz.style.display = tur === "SOZ" ? "" : "none";
+  if (gDil) gDil.style.display = tur === "DIL" ? "" : "none";
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  const turSelect = document.getElementById("puanTuru");
   const btn = document.getElementById("hesaplaBtn");
   const sonuc = document.getElementById("sonuc");
-  const turSelect = document.getElementById("puanTuru");
+  const siraEl = document.getElementById("sira");
 
-  if (!btn || !sonuc || !turSelect) {
-    console.log("UI elemanları bulunamadı");
-    return;
-  }
+  if (!turSelect || !btn || !sonuc || !siraEl) return;
 
-  function updateUI() {
-    const tur = turSelect.value;
-
-    // AYT Sayısal
-    setVisible("grp_ayt_say", tur === "SAY");
-    // AYT EA
-    setVisible("grp_ayt_ea", tur === "EA");
-    // AYT Söz
-    setVisible("grp_ayt_soz", tur === "SOZ");
-    // YDT
-    setVisible("grp_ydt", tur === "DIL");
-  }
-
-  turSelect.addEventListener("change", updateUI);
-  updateUI();
+  showOnlyGroup(turSelect.value);
+  turSelect.addEventListener("change", () => {
+    showOnlyGroup(turSelect.value);
+    sonuc.textContent = "—";
+    siraEl.textContent = "—";
+  });
 
   btn.addEventListener("click", () => {
+    const tur = turSelect.value;
+
+    // TYT
+    const tyt_tr = readNumber("tyt_tr");
+    const tyt_sos = readNumber("tyt_sos");
+    const tyt_mat = readNumber("tyt_mat");
+    const tyt_fen = readNumber("tyt_fen");
+
+    // Ortak OBP
+    const obp = readNumber("obp");
+
+    // AYT / YDT (türe göre doğru id'lerden oku)
+    let ayt_mat = 0, ayt_fiz = 0, ayt_kim = 0, ayt_bio = 0;
+    let ayt_edeb = 0, ayt_tar1 = 0, ayt_cog1 = 0, ayt_tar2 = 0, ayt_cog2 = 0, ayt_fels = 0, ayt_dkab = 0;
+    let ydt = 0;
+
+    if (tur === "SAY") {
+      ayt_mat = readNumber("ayt_mat");
+      ayt_fiz = readNumber("ayt_fiz");
+      ayt_kim = readNumber("ayt_kim");
+      ayt_bio = readNumber("ayt_bio");
+    } else if (tur === "EA") {
+      ayt_mat = readNumber("ayt_mat_ea");
+      ayt_edeb = readNumber("ayt_edeb");
+      ayt_tar1 = readNumber("ayt_tar1");
+      ayt_cog1 = readNumber("ayt_cog1");
+    } else if (tur === "SOZ") {
+      ayt_edeb = readNumber("ayt_edeb_soz");
+      ayt_tar1 = readNumber("ayt_tar1_soz");
+      ayt_cog1 = readNumber("ayt_cog1_soz");
+      ayt_tar2 = readNumber("ayt_tar2");
+      ayt_cog2 = readNumber("ayt_cog2");
+      ayt_fels = readNumber("ayt_fels");
+      ayt_dkab = readNumber("ayt_dkab");
+    } else if (tur === "DIL") {
+      ydt = readNumber("ydt");
+    }
+
     const input = {
-      obp: readNumber("obp"),
-
-      tyt_tr: readNumber("tyt_tr"),
-      tyt_sos: readNumber("tyt_sos"),
-      tyt_mat: readNumber("tyt_mat"),
-      tyt_fen: readNumber("tyt_fen"),
-
-      ayt_mat: readNumber("ayt_mat"),
-      ayt_fiz: readNumber("ayt_fiz"),
-      ayt_kim: readNumber("ayt_kim"),
-      ayt_bio: readNumber("ayt_bio"),
-
-      ayt_edeb: readNumber("ayt_edeb"),
-      ayt_tar1: readNumber("ayt_tar1"),
-      ayt_cog1: readNumber("ayt_cog1"),
-      ayt_tar2: readNumber("ayt_tar2"),
-      ayt_cog2: readNumber("ayt_cog2"),
-      ayt_fels: readNumber("ayt_fels"),
-      ayt_dkab: readNumber("ayt_dkab"),
-
-      ydt: readNumber("ydt"),
+      obp,
+      tyt_tr, tyt_sos, tyt_mat, tyt_fen,
+      ayt_mat, ayt_fiz, ayt_kim, ayt_bio,
+      ayt_edeb, ayt_tar1, ayt_cog1, ayt_tar2, ayt_cog2, ayt_fels, ayt_dkab,
+      ydt
     };
 
-    const tur = turSelect.value;
     const puan = hesaplaPuan(tur, input);
-    sonuc.textContent = puan === null ? "Hata" : `${tur} Puan: ${puan.toFixed(3)}`;
+    if (puan === null) {
+      sonuc.textContent = "Hata";
+      siraEl.textContent = "—";
+      return;
+    }
+
+    sonuc.textContent = `${tur} Puan: ${puan.toFixed(3)}`;
+
+    const r = hesaplaSiraPlaceholder(tur, puan);
+    siraEl.textContent = r ? `Sıralama (Min–Max): ${r.min} – ${r.max}` : "—";
   });
 });
