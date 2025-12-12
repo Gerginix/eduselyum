@@ -1,9 +1,9 @@
 <!doctype html>
 <html lang="tr">
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8" />
   <title>FREYA – YKS Puan Motoru</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body{font-family:Arial,sans-serif;max-width:760px;margin:30px auto;padding:10px}
     h1{text-align:center}
@@ -29,11 +29,53 @@
 </select>
 
 <label>OBP (0–100)</label>
-<input id="obp" type="number" step="0.01" placeholder="Örn: 85,50">
+<input id="obp" type="number" step="0.01" placeholder="Örn: 85,50" />
 <div class="hint">Virgül veya nokta ile yazabilirsin.</div>
 
 <div class="grp">
   <b>TYT Netleri</b>
-  <label>TYT Türkçe</label><input id="tyt_tr" type="number" step="0.25">
-  <label>TYT Sosyal</label><input id="tyt_sos" type="number" step="0.25">
-  <label>TYT Matematik</label><input id="tyt_m_
+  <label>TYT Türkçe</label><input id="tyt_tr" type="number" step="0.25" />
+  <label>TYT Sosyal</label><input id="tyt_sos" type="number" step="0.25" />
+  <label>TYT Matematik</label><input id="tyt_mat" type="number" step="0.25" />
+  <label>TYT Fen</label><input id="tyt_fen" type="number" step="0.25" />
+</div>
+
+<div id="grp_say" class="grp">
+  <b>AYT (SAY)</b>
+  <label>AYT Matematik</label><input id="ayt_mat" type="number" step="0.25" />
+  <label>AYT Fizik</label><input id="ayt_fiz" type="number" step="0.25" />
+  <label>AYT Kimya</label><input id="ayt_kim" type="number" step="0.25" />
+  <label>AYT Biyoloji</label><input id="ayt_bio" type="number" step="0.25" />
+</div>
+
+<div id="grp_ea" class="grp" style="display:none">
+  <b>AYT (EA)</b>
+  <label>AYT Matematik</label><input id="ayt_mat_ea" type="number" step="0.25" />
+  <label>AYT Edebiyat</label><input id="ayt_edeb" type="number" step="0.25" />
+  <label>AYT Tarih-1</label><input id="ayt_tar1" type="number" step="0.25" />
+  <label>AYT Coğrafya-1</label><input id="ayt_cog1" type="number" step="0.25" />
+</div>
+
+<div id="grp_soz" class="grp" style="display:none">
+  <b>AYT (SÖZ)</b>
+  <label>AYT Edebiyat</label><input id="ayt_edeb_soz" type="number" step="0.25" />
+  <label>AYT Tarih-1</label><input id="ayt_tar1_soz" type="number" step="0.25" />
+  <label>AYT Coğrafya-1</label><input id="ayt_cog1_soz" type="number" step="0.25" />
+  <label>AYT Tarih-2</label><input id="ayt_tar2" type="number" step="0.25" />
+  <label>AYT Coğrafya-2</label><input id="ayt_cog2" type="number" step="0.25" />
+  <label>AYT Felsefe Grubu</label><input id="ayt_fels" type="number" step="0.25" />
+  <label>AYT DKAB</label><input id="ayt_dkab" type="number" step="0.25" />
+</div>
+
+<div id="grp_dil" class="grp" style="display:none">
+  <b>YDT (DİL)</b>
+  <label>YDT Net</label><input id="ydt" type="number" step="0.25" />
+</div>
+
+<button id="hesaplaBtn">HESAPLA</button>
+<div id="sonuc">—</div>
+<div id="sira">—</div>
+
+<script src="app.js"></script>
+</body>
+</html>
