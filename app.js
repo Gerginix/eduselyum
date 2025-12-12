@@ -1,3 +1,9 @@
+/* =========================
+   FREYA — YKS Puan + Sıralama (CSV)
+   Repo kökünde bu dosyalar olmalı:
+   /say.csv  /ea.csv  /soz.csv  /dil.csv
+   ========================= */
+
 function readNumber(id) {
   const el = document.getElementById(id);
   if (!el) return 0;
@@ -8,7 +14,7 @@ function readNumber(id) {
 }
 function round3(x) { return Math.round(x * 1000) / 1000; }
 
-// Excel: Katsayılar_2025 tablosu
+/* ====== Katsayılar (Excel: Katsayılar_2025 sheet) ====== */
 const COEF = {
   EA:  { intercept:128.028, obp:0.60285, TR:1.16424, SB:1.33609, TM:1.44715, FB:1.02141,
          AYT_MAT:2.88393, FIZ:0, KIM:0, BIO:0, EDEB:2.97424, TAR1:2.39932, COG1:2.85842,
@@ -45,9 +51,11 @@ function calcScore(tur, x) {
     c.FELS * x.ayt_fels +
     c.DKAB * x.ayt_dkab +
     c.YDIL * x.ydt;
+
   return round3(p);
 }
 
+/* ====== Görünürlük ====== */
 function showOnlyGroup(tur) {
   const gSay = document.getElementById("grp_say");
   const gEa  = document.getElementById("grp_ea");
@@ -59,59 +67,72 @@ function showOnlyGroup(tur) {
   if (gDil) gDil.style.display = (tur === "DIL") ? "" : "none";
 }
 
-// ------------------------
-// SIRALAMA (CSV -> Min/Max)
-// ------------------------
-const RANK_FILE = { SAY:"say.csv", EA:"ea.csv", SOZ:"soz.csv", DIL:"dil.csv" };
-const rankCache = {}; // { tur: Map<int, {min:number|null, max:number|null}> }
-
-function toIntTR(s) {
-  const t = (s ?? "").toString().trim();
-  if (!t || t === "#YOK") return null;
-  // 1.291.528 gibi binlik noktaları kaldır
-  const cleaned = t.replace(/\./g, "").replace(/\s/g, "");
-  const n = Number(cleaned);
-  return Number.isFinite(n) ? n : null;
-}
-function formatTR(n) {
-  if (n === null || n === undefined) return "—";
-  const s = String(Math.trunc(n));
-  return s.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-}
-
-async function loadRankMap(tur) {
-  if (rankCache[tur]) return rankCache[tur];
-
-  const file = RANK_FILE[tur];
-  const res = await fetch(file, { cache: "no-store" });
-  if (!res.ok) throw new Error(`${file} okunamadı: ${res.status}`);
-  const text = await res.text();
-
-  const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
-  if (lines.length < 2) throw new Error(`${file} boş görünüyor`);
-
-  // delimiter tespiti
-  const header = lines[0];
-  const delim = (header.split(";").length > header.split(",").length) ? ";" : ",";
-
+/* ====== CSV -> Map( puanInt => {min,max} ) ======
+   - Header varsa otomatik atlar
+   - 1. sütun puan, 2. sütun min, 3. sütun max kabul eder
+*/
+function parseCSVToMap(csvText) {
   const map = new Map();
-  for (let i = 1; i < lines.length; i++) {
-    const cols = lines[i].split(delim);
-    // Beklenen: A=puan (0), D=min (3), E=max (4)
-    const puanInt = toIntTR(cols[0]);
-    if (puanInt === null) continue;
+  const lines = (csvText || "")
+    .split(/\r?\n/)
+    .map(l => l.trim())
+    .filter(Boolean);
 
-    const min = toIntTR(cols[3]);
-    const max = toIntTR(cols[4]);
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const parts = line.split(",").map(s => s.trim());
 
-    map.set(puanInt, { min, max });
+    if (parts.length < 3) continue;
+
+    // Header yakala: ilk hücre sayı değilse atla
+    const puanMaybe = Number(parts[0].replace(",", "."));
+    if (!Number.isFinite(puanMaybe)) continue;
+
+    const puan = Math.floor(puanMaybe);
+
+    // min/max sayıları: binlik ayırıcı vs. olabilir diye sadece rakam bırak
+    const minStr = parts[1];
+    const maxStr = parts[2];
+
+    const min = Number(String(minStr).replace(/\./g, "").replace(/\s/g, "").replace(",", "."));
+    const max = Number(String(maxStr).replace(/\./g, "").replace(/\s/g, "").replace(",", "."));
+
+    if (!Number.isFinite(min) || !Number.isFinite(max)) continue;
+
+    map.set(puan, { min: Math.trunc(min), max: Math.trunc(max) });
   }
-
-  rankCache[tur] = map;
   return map;
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+async function loadRankMap(url) {
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) throw new Error(`CSV yüklenemedi: ${url} (${res.status})`);
+  const text = await res.text();
+  return parseCSVToMap(text);
+}
+
+/* Excel mantığı: AŞAĞIYUVARLA(puan) yoksa alt puana in */
+function findNearestLower(map, puan) {
+  let p = Math.floor(puan);
+  while (p >= 0 && !map.has(p)) p--;
+  return map.get(p) || null;
+}
+
+/* ====== Global rank map’ler ====== */
+let SAY_MAP = null;
+let EA_MAP  = null;
+let SOZ_MAP = null;
+let DIL_MAP = null;
+
+function getMapByTur(tur) {
+  if (tur === "SAY") return SAY_MAP;
+  if (tur === "EA")  return EA_MAP;
+  if (tur === "SOZ") return SOZ_MAP;
+  if (tur === "DIL") return DIL_MAP;
+  return null;
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
   const turSelect = document.getElementById("puanTuru");
   const btn = document.getElementById("hesaplaBtn");
   const sonuc = document.getElementById("sonuc");
@@ -119,70 +140,84 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (!turSelect || !btn || !sonuc || !siraEl) return;
 
+  // CSV’leri arka planda yükle (site ilk açılınca)
+  // Dosya isimleri: say.csv / ea.csv / soz.csv / dil.csv
+  // Repo root’ta durmalı.
+  try {
+    [SAY_MAP, EA_MAP, SOZ_MAP, DIL_MAP] = await Promise.all([
+      loadRankMap("say.csv"),
+      loadRankMap("ea.csv"),
+      loadRankMap("soz.csv"),
+      loadRankMap("dil.csv"),
+    ]);
+  } catch (e) {
+    console.warn(e);
+    // CSV gelmezse yine de puan çalışsın; sırayı "—" basar
+  }
+
   showOnlyGroup(turSelect.value);
 
   turSelect.addEventListener("change", () => {
     showOnlyGroup(turSelect.value);
     sonuc.textContent = "—";
-    siraEl.textContent = "—";
+    siraEl.textContent = "Min Sıra: — | Max Sıra: —";
   });
 
-  btn.addEventListener("click", async () => {
-    try {
-      const tur = turSelect.value;
+  btn.addEventListener("click", () => {
+    const tur = turSelect.value;
 
-      // Ortak
-      const x = {
-        obp: readNumber("obp"),
-        tyt_tr: readNumber("tyt_tr"),
-        tyt_sos: readNumber("tyt_sos"),
-        tyt_mat: readNumber("tyt_mat"),
-        tyt_fen: readNumber("tyt_fen"),
-        ayt_mat: 0, ayt_fiz: 0, ayt_kim: 0, ayt_bio: 0,
-        ayt_edeb: 0, ayt_tar1: 0, ayt_cog1: 0,
-        ayt_tar2: 0, ayt_cog2: 0, ayt_fels: 0, ayt_dkab: 0,
-        ydt: 0,
-      };
+    // Ortak
+    const x = {
+      obp: readNumber("obp"),
+      tyt_tr: readNumber("tyt_tr"),
+      tyt_sos: readNumber("tyt_sos"),
+      tyt_mat: readNumber("tyt_mat"),
+      tyt_fen: readNumber("tyt_fen"),
+      ayt_mat: 0, ayt_fiz: 0, ayt_kim: 0, ayt_bio: 0,
+      ayt_edeb: 0, ayt_tar1: 0, ayt_cog1: 0,
+      ayt_tar2: 0, ayt_cog2: 0, ayt_fels: 0, ayt_dkab: 0,
+      ydt: 0,
+    };
 
-      // Türe göre doğru inputları oku
-      if (tur === "SAY") {
-        x.ayt_mat = readNumber("ayt_mat");
-        x.ayt_fiz = readNumber("ayt_fiz");
-        x.ayt_kim = readNumber("ayt_kim");
-        x.ayt_bio = readNumber("ayt_bio");
-      } else if (tur === "EA") {
-        x.ayt_mat  = readNumber("ayt_mat_ea");
-        x.ayt_edeb = readNumber("ayt_edeb");
-        x.ayt_tar1 = readNumber("ayt_tar1");
-        x.ayt_cog1 = readNumber("ayt_cog1");
-      } else if (tur === "SOZ") {
-        x.ayt_edeb = readNumber("ayt_edeb_soz");
-        x.ayt_tar1 = readNumber("ayt_tar1_soz");
-        x.ayt_cog1 = readNumber("ayt_cog1_soz");
-        x.ayt_tar2 = readNumber("ayt_tar2");
-        x.ayt_cog2 = readNumber("ayt_cog2");
-        x.ayt_fels = readNumber("ayt_fels");
-        x.ayt_dkab = readNumber("ayt_dkab");
-      } else if (tur === "DIL") {
-        x.ydt = readNumber("ydt");
-      }
-
-      const puan = calcScore(tur, x);
-      sonuc.textContent = `${tur} Puan: ${puan.toFixed(3)}`;
-
-      // SIRALAMA: AŞAĞIYUVARLA(puan) -> CSV'de bul
-      const puanInt = Math.floor(puan);
-      const map = await loadRankMap(tur);
-      const rec = map.get(puanInt);
-
-      if (!rec) {
-        siraEl.textContent = `Min Sıra: — | Max Sıra: — (puan=${puanInt} CSV’de yok)`;
-      } else {
-        siraEl.textContent = `Min Sıra: ${formatTR(rec.min)} | Max Sıra: ${formatTR(rec.max)}`;
-      }
-    } catch (e) {
-      console.error(e);
-      siraEl.textContent = "Sıralama okunamadı (Console'a bak).";
+    // Türe göre doğru inputları oku
+    if (tur === "SAY") {
+      x.ayt_mat = readNumber("ayt_mat");
+      x.ayt_fiz = readNumber("ayt_fiz");
+      x.ayt_kim = readNumber("ayt_kim");
+      x.ayt_bio = readNumber("ayt_bio");
+    } else if (tur === "EA") {
+      x.ayt_mat  = readNumber("ayt_mat_ea");
+      x.ayt_edeb = readNumber("ayt_edeb");
+      x.ayt_tar1 = readNumber("ayt_tar1");
+      x.ayt_cog1 = readNumber("ayt_cog1");
+    } else if (tur === "SOZ") {
+      x.ayt_edeb = readNumber("ayt_edeb_soz");
+      x.ayt_tar1 = readNumber("ayt_tar1_soz");
+      x.ayt_cog1 = readNumber("ayt_cog1_soz");
+      x.ayt_tar2 = readNumber("ayt_tar2");
+      x.ayt_cog2 = readNumber("ayt_cog2");
+      x.ayt_fels = readNumber("ayt_fels");
+      x.ayt_dkab = readNumber("ayt_dkab");
+    } else if (tur === "DIL") {
+      x.ydt = readNumber("ydt");
     }
+
+    const puan = calcScore(tur, x);
+    sonuc.textContent = `${tur} Puan: ${puan.toFixed(3)}`;
+
+    const map = getMapByTur(tur);
+
+    if (!map || map.size === 0) {
+      siraEl.textContent = "Min Sıra: — | Max Sıra: —";
+      return;
+    }
+
+    const row = findNearestLower(map, puan);
+    if (!row) {
+      siraEl.textContent = "Min Sıra: — | Max Sıra: —";
+      return;
+    }
+
+    siraEl.textContent = `Min Sıra: ${row.min.toLocaleString("tr-TR")} | Max Sıra: ${row.max.toLocaleString("tr-TR")}`;
   });
 });
