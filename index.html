@@ -5,6 +5,13 @@
   <title>YKS 2025 PUAN VE SIRA SİMÜLATÖRÜ</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
+  <!-- SEO (hafif) -->
+  <meta name="description" content="2026 YKS hazırlığında deneme netlerinle 2025 YKS puan ve sıralamanı (SAY/EA/SÖZ/DİL) simüle et. OBP ile yerleştirme puanı ve sıralama hesaplama." />
+  <meta property="og:title" content="YKS 2025 PUAN VE SIRA SİMÜLATÖRÜ" />
+  <meta property="og:description" content="Deneme netlerin + OBP ile 2025 YKS puan ve sıralamanı simüle et (SAY/EA/SÖZ/DİL)." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="umut.jpeg" />
+
   <style>
     :root{
       --page-w: 380px;
@@ -38,11 +45,31 @@
       text-align:center;
       font-size: 13px;
       margin-top: 10px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      flex-wrap:wrap;
     }
     .igline a{
       color:#0b57d0;
       text-decoration: underline;
       word-break: break-word;
+    }
+    .igicon{
+      width:18px;
+      height:18px;
+      display:inline-block;
+      flex:0 0 auto;
+    }
+
+    /* Dipnot */
+    .disclaimer{
+      text-align:center;
+      font-size:12px;
+      color:#444;
+      margin-top:10px;
+      line-height:1.4;
     }
 
     label{
@@ -72,6 +99,15 @@
       font-size:16px;
       font-weight:700;
       display:block;
+      cursor:pointer;
+    }
+
+    /* Paylaş butonu (ikincil) */
+    .btn-secondary{
+      margin-top:10px;
+      font-size:14px;
+      font-weight:700;
+      opacity:0.92;
     }
 
     .grp{
@@ -166,10 +202,21 @@
 </div>
 
 <div class="igline">
-  Daha fazlası için instagram hesabımı takip edebilrsiniz:
+  <span class="igicon" aria-hidden="true">
+    <!-- Inline Instagram icon (SVG) -->
+    <svg viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Instagram">
+      <path d="M7.5 2h9A5.5 5.5 0 0 1 22 7.5v9A5.5 5.5 0 0 1 16.5 22h-9A5.5 5.5 0 0 1 2 16.5v-9A5.5 5.5 0 0 1 7.5 2Zm0 2A3.5 3.5 0 0 0 4 7.5v9A3.5 3.5 0 0 0 7.5 20h9a3.5 3.5 0 0 0 3.5-3.5v-9A3.5 3.5 0 0 0 16.5 4h-9ZM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6Zm5.4-2.15a1.15 1.15 0 1 1 0 2.3 1.15 1.15 0 0 1 0-2.3Z"/>
+    </svg>
+  </span>
+
+  <span>Daha fazlası için instagram hesabımı takip edebilrsiniz:</span>
   <a href="https://instagram.com/umutsahin.tr" target="_blank" rel="noopener">
-    https://instagram.com/umutsahin.tr
+    instagram.com/umutsahin.tr
   </a>
+</div>
+
+<div class="disclaimer">
+  Bu sonuçlar bir <b>simülasyondur</b>. Gerçek YKS sonuçları; sınavın zorluk düzeyi, standart sapma ve ÖSYM hesaplamalarına göre değişebilir.
 </div>
 
 <label>Puan Türü</label>
@@ -229,6 +276,77 @@
 <div id="sonuc">—</div>
 <div id="sira">—</div>
 
+<button id="paylasBtn" class="btn-secondary" type="button">SONUCU PAYLAŞ</button>
+<div id="paylasMesaj" class="hint" style="display:none;"></div>
+
 <script src="app.js"></script>
+
+<script>
+  (function(){
+    const btn = document.getElementById("paylasBtn");
+    const msg = document.getElementById("paylasMesaj");
+    const sonucEl = document.getElementById("sonuc");
+    const siraEl = document.getElementById("sira");
+
+    if (!btn || !msg || !sonucEl || !siraEl) return;
+
+    function getShareText(){
+      const sonuc = (sonucEl.textContent || "").trim();
+      const sira  = (siraEl.textContent || "").trim();
+      const url   = window.location.href;
+      const pieces = [];
+      if (sonuc && sonuc !== "—") pieces.push(sonuc);
+      if (sira && sira !== "—") pieces.push("Sıralama: " + sira.replace(/^Sıra:\s*/i, ""));
+      pieces.push(url);
+      return pieces.join("\n");
+    }
+
+    async function copyToClipboard(text){
+      try{
+        await navigator.clipboard.writeText(text);
+        return true;
+      }catch(e){
+        // Fallback
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.left = "-9999px";
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        let ok = false;
+        try{ ok = document.execCommand("copy"); }catch(_){ ok = false; }
+        document.body.removeChild(ta);
+        return ok;
+      }
+    }
+
+    btn.addEventListener("click", async () => {
+      const text = getShareText();
+
+      // Mobilde native paylaşım (varsa)
+      if (navigator.share) {
+        try{
+          await navigator.share({
+            title: "YKS 2025 Puan ve Sıra Simülatörü",
+            text,
+            url: window.location.href
+          });
+          msg.style.display = "block";
+          msg.textContent = "Paylaşım ekranı açıldı.";
+          return;
+        }catch(e){
+          // kullanıcı iptal ederse sessiz geç
+        }
+      }
+
+      // PC / fallback: link+sonuç kopyala
+      const ok = await copyToClipboard(text);
+      msg.style.display = "block";
+      msg.textContent = ok ? "Kopyalandı. İstediğin yere yapıştırabilirsin." : "Kopyalanamadı. Tarayıcı izin vermedi.";
+    });
+  })();
+</script>
+
 </body>
 </html>
