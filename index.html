@@ -2,15 +2,51 @@
 <html lang="tr">
 <head>
   <meta charset="utf-8" />
-  <title>YKS 2025 PUAN VE SIRA SİMÜLATÖRÜ</title>
+
+  <!-- ✅ SEO: Daha güçlü title -->
+  <title>YKS 2025 Puan ve Sıralama Simülatörü | Deneme Netleri + OBP ile Hesaplama</title>
+
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- SEO (hafif) -->
-  <meta name="description" content="2026 YKS hazırlığında deneme netlerinle 2025 YKS puan ve sıralamanı (SAY/EA/SÖZ/DİL) simüle et. OBP ile yerleştirme puanı ve sıralama hesaplama." />
-  <meta property="og:title" content="YKS 2025 PUAN VE SIRA SİMÜLATÖRÜ" />
+  <!-- ✅ SEO: Daha güçlü description -->
+  <meta name="description" content="2026 YKS hazırlığında deneme netlerinle 2025 YKS puanını ve sıralamanı (SAY/EA/SÖZ/DİL) simüle et. OBP dahil yerleştirme puanı ve sıralama hesaplama aracı." />
+
+  <!-- ✅ Canonical (GitHub Pages'te çok önemli) -->
+  <link rel="canonical" href="https://gerginix.github.io/yks-sira-puan-simulatoru/" />
+
+  <!-- ✅ Robots -->
+  <meta name="robots" content="index,follow,max-image-preview:large" />
+
+  <!-- ✅ Tema rengi (mobil tarayıcı üst bar) -->
+  <meta name="theme-color" content="#ffffff" />
+
+  <!-- ✅ Open Graph / Paylaşım Önizleme -->
+  <meta property="og:title" content="YKS 2025 Puan ve Sıralama Simülatörü" />
   <meta property="og:description" content="Deneme netlerin + OBP ile 2025 YKS puan ve sıralamanı simüle et (SAY/EA/SÖZ/DİL)." />
   <meta property="og:type" content="website" />
   <meta property="og:image" content="umut.jpeg" />
+  <meta property="og:url" content="https://gerginix.github.io/yks-sira-puan-simulatoru/" />
+
+  <!-- ✅ Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="YKS 2025 Puan ve Sıralama Simülatörü" />
+  <meta name="twitter:description" content="Deneme netlerin + OBP ile 2025 YKS puan ve sıralamanı simüle et (SAY/EA/SÖZ/DİL)." />
+  <meta name="twitter:image" content="umut.jpeg" />
+
+  <!-- ✅ Structured Data: Google’a “Bu bir hesaplama aracı” demek -->
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@type":"WebApplication",
+    "name":"YKS 2025 Puan ve Sıralama Simülatörü",
+    "applicationCategory":"EducationalApplication",
+    "operatingSystem":"Web",
+    "inLanguage":"tr-TR",
+    "url":"https://gerginix.github.io/yks-sira-puan-simulatoru/",
+    "description":"Deneme netleri ve OBP ile 2025 YKS puanı ve sıralaması (SAY/EA/SÖZ/DİL) simülasyonu yapan web aracı.",
+    "offers":{"@type":"Offer","price":"0","priceCurrency":"TRY"}
+  }
+  </script>
 
   <style>
     :root{
@@ -28,8 +64,18 @@
 
     h1{
       text-align:center;
-      margin: 6px 0 10px;
+      margin: 6px 0 6px;
       font-size: 22px;
+    }
+
+    /* ✅ SEO + UX: küçük H2 (görünür ama rahatsız etmeyen) */
+    h2{
+      text-align:center;
+      font-size: 13px;
+      font-weight: 700;
+      margin: 0 0 12px;
+      color:#222;
+      opacity: 0.92;
     }
 
     .subtitle{
@@ -37,14 +83,14 @@
       font-size: 13px;
       color:#333;
       line-height:1.45;
-      margin-bottom:16px;
+      margin-bottom:14px;
     }
 
-    /* Instagram satırı (subtitle altında) */
+    /* Instagram satırı */
     .igline{
       text-align:center;
       font-size: 13px;
-      margin-top: 10px;
+      margin-top: 8px;
       display:flex;
       align-items:center;
       justify-content:center;
@@ -102,7 +148,6 @@
       cursor:pointer;
     }
 
-    /* Paylaş butonu (ikincil) */
     .btn-secondary{
       margin-top:10px;
       font-size:14px;
@@ -145,11 +190,22 @@
       text-align:center;
     }
 
+    /* ✅ SEO metin bloğu (küçük, rahatsız etmeyen) */
+    .seofoot{
+      margin-top:18px;
+      font-size:12px;
+      color:#555;
+      line-height:1.55;
+      text-align:center;
+      opacity: 0.95;
+    }
+
     @media (max-width: 420px){
       :root{
         --page-w: 92vw;
         --control-w: 85%;
       }
+      h2{ font-size: 12px; }
     }
 
     /* === ARKA PLAN FOTO (PC + MOBİL) === */
@@ -160,23 +216,21 @@
       background-image: url("umut.jpeg");
       background-repeat:no-repeat;
       background-size:cover;
-      background-position: 65% center; /* PC kadraj */
-      opacity:0.22;                    /* transparan, flu YOK */
+      background-position: 65% center;
+      opacity:0.22;
       z-index:-1;
       pointer-events:none;
     }
 
-    /* Tüm içerik foto üstünde kalsın */
     body > *{
       position:relative;
       z-index:1;
     }
 
-    /* === MOBİL AYAR === */
     @media (max-width: 600px){
       body::before{
-        background-position: 50% 20%;  /* yüz yukarıda */
-        background-size: 160%;         /* yüz büyük */
+        background-position: 50% 20%;
+        background-size: 160%;
         opacity:0.18;
       }
     }
@@ -185,12 +239,12 @@
   <!-- GoatCounter -->
   <script data-goatcounter="https://gerginix.goatcounter.com/count"
           async src="//gc.zgo.at/count.js"></script>
-
 </head>
 
 <body>
 
 <h1>YKS 2025 PUAN VE SIRA SİMÜLATÖRÜ</h1>
+<h2>Deneme netleri + OBP ile 2025 YKS puan ve sıralama hesaplama</h2>
 
 <div class="subtitle">
   2026 YKS hazırlığınızı sürdürürken deneme sınavlarında ürettiğiniz netlerin,
@@ -207,8 +261,7 @@
       <path d="M7.5 2h9A5.5 5.5 0 0 1 22 7.5v9A5.5 5.5 0 0 1 16.5 22h-9A5.5 5.5 0 0 1 2 16.5v-9A5.5 5.5 0 0 1 7.5 2Zm0 2A3.5 3.5 0 0 0 4 7.5v9A3.5 3.5 0 0 0 7.5 20h9a3.5 3.5 0 0 0 3.5-3.5v-9A3.5 3.5 0 0 0 16.5 4h-9ZM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6Zm5.4-2.15a1.15 1.15 0 1 1 0 2.3 1.15 1.15 0 0 1 0-2.3Z"/>
     </svg>
   </span>
-
-  <span>Daha fazlası için instagram hesabımı takip edebilrsiniz:</span>
+  <span>Daha fazlası için instagram hesabımı takip edebilirsin:</span>
   <a href="https://instagram.com/umutsahin.tr" target="_blank" rel="noopener">
     instagram.com/umutsahin.tr
   </a>
@@ -278,6 +331,12 @@
 <button id="paylasBtn" class="btn-secondary" type="button">SONUCU PAYLAŞ</button>
 <div id="paylasMesaj" class="hint" style="display:none;"></div>
 
+<div class="seofoot">
+  Bu araç; deneme netleri ve OBP kullanarak 2025 YKS için <b>SAY, EA, SÖZ, DİL</b> puan türlerinde
+  puan ve sıralama simülasyonu yapar. “YKS puan hesaplama”, “deneme netleriyle YKS sıralama”
+  gibi aramalarda doğru bilgiye hızlı ulaşman için hazırlanmıştır.
+</div>
+
 <script src="app.js"></script>
 
 <script>
@@ -300,7 +359,7 @@
       lines.push("YKS 2025 Puan ve Sıra Simülatörü");
       if (sonuc && sonuc !== "—") lines.push(sonuc);
       if (sira && sira !== "—")  lines.push(sira);
-      lines.push(url); // URL'yi metnin içine gömüyoruz (WhatsApp metni taşısın diye)
+      lines.push(url);
       return lines.join("\n");
     }
 
@@ -333,7 +392,6 @@
 
       const text = getShareText();
 
-      // Mobilde native paylaşım (WhatsApp dahil): URL alanını KULLANMIYORUZ.
       if (navigator.share) {
         try{
           await navigator.share({
@@ -348,7 +406,6 @@
         }
       }
 
-      // PC / fallback: sonuç+link kopyala
       const ok = await copyToClipboard(text);
       msg.style.display = "block";
       msg.textContent = ok ? "Kopyalandı. WhatsApp/DM’ye yapıştırabilirsin." : "Kopyalanamadı. Tarayıcı izin vermedi.";
