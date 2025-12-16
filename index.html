@@ -252,6 +252,30 @@
       background: rgba(255,255,255,0.9);
       color:#111;
     }
+  
+    /* DY-NET satırı: Doğru / Yanlış / Net (Net = D - Y/4) */
+    .dywrap{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      margin: 0 0 10px 0;
+    }
+    .dywrap > .dy{
+      width: 56px;
+      padding: 8px;
+      border: 1px solid #bbb;
+      border-radius: var(--radius);
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+    .dywrap > input:not(.dy){
+      width: var(--control-w);
+      padding: 8px;
+      border: 1px solid #bbb;
+      border-radius: var(--radius);
+      box-sizing: border-box;
+    }
+
   </style>
 
   <!-- GoatCounter -->
@@ -303,42 +327,62 @@
 
 <div class="grp">
   <b>TYT Netleri</b>
-  <label>TYT Türkçe</label><input id="tyt_tr" type="number" step="0.25" />
-  <label>TYT Sosyal</label><input id="tyt_sos" type="number" step="0.25" />
-  <label>TYT Matematik</label><input id="tyt_mat" type="number" step="0.25" />
-  <label>TYT Fen</label><input id="tyt_fen" type="number" step="0.25" />
+  <label>TYT Türkçe</label>
+  <div class="dywrap"><input id="tyt_tr_d" class="dy dy-d" type="number" step="1" placeholder="D" inputmode="numeric" /><input id="tyt_tr_y" class="dy dy-y" type="number" step="1" placeholder="Y" inputmode="numeric" /><input id="tyt_tr" type="number" step="0.25" /></div>
+  <label>TYT Sosyal</label>
+  <div class="dywrap"><input id="tyt_sos_d" class="dy dy-d" type="number" step="1" placeholder="D" inputmode="numeric" /><input id="tyt_sos_y" class="dy dy-y" type="number" step="1" placeholder="Y" inputmode="numeric" /><input id="tyt_sos" type="number" step="0.25" /></div>
+  <label>TYT Matematik</label>
+  <div class="dywrap"><input id="tyt_mat_d" class="dy dy-d" type="number" step="1" placeholder="D" inputmode="numeric" /><input id="tyt_mat_y" class="dy dy-y" type="number" step="1" placeholder="Y" inputmode="numeric" /><input id="tyt_mat" type="number" step="0.25" /></div>
+  <label>TYT Fen</label>
+  <div class="dywrap"><input id="tyt_fen_d" class="dy dy-d" type="number" step="1" placeholder="D" inputmode="numeric" /><input id="tyt_fen_y" class="dy dy-y" type="number" step="1" placeholder="Y" inputmode="numeric" /><input id="tyt_fen" type="number" step="0.25" /></div>
 </div>
 
 <div id="grp_say" class="grp">
   <b>AYT (SAY)</b>
-  <label>AYT Matematik</label><input id="ayt_mat" type="number" step="0.25" />
-  <label>AYT Fizik</label><input id="ayt_fiz" type="number" step="0.25" />
-  <label>AYT Kimya</label><input id="ayt_kim" type="number" step="0.25" />
-  <label>AYT Biyoloji</label><input id="ayt_bio" type="number" step="0.25" />
+  <label>AYT Matematik</label>
+  <div class="dywrap"><input id="ayt_mat_d" class="dy dy-d" type="number" step="1" placeholder="D" inputmode="numeric" /><input id="ayt_mat_y" class="dy dy-y" type="number" step="1" placeholder="Y" inputmode="numeric" /><input id="ayt_mat" type="number" step="0.25" /></div>
+  <label>AYT Fizik</label>
+  <div class="dywrap"><input id="ayt_fiz_d" class="dy dy-d" type="number" step="1" placeholder="D" inputmode="numeric" /><input id="ayt_fiz_y" class="dy dy-y" type="number" step="1" placeholder="Y" inputmode="numeric" /><input id="ayt_fiz" type="number" step="0.25" /></div>
+  <label>AYT Kimya</label>
+  <div class="dywrap"><input id="ayt_kim_d" class="dy dy-d" type="number" step="1" placeholder="D" inputmode="numeric" /><input id="ayt_kim_y" class="dy dy-y" type="number" step="1" placeholder="Y" inputmode="numeric" /><input id="ayt_kim" type="number" step="0.25" /></div>
+  <label>AYT Biyoloji</label>
+  <div class="dywrap"><input id="ayt_bio_d" class="dy dy-d" type="number" step="1" placeholder="D" inputmode="numeric" /><input id="ayt_bio_y" class="dy dy-y" type="number" step="1" placeholder="Y" inputmode="numeric" /><input id="ayt_bio" type="number" step="0.25" /></div>
 </div>
 
 <div id="grp_ea" class="grp" style="display:none">
   <b>AYT (EA)</b>
-  <label>AYT Matematik</label><input id="ayt_mat_ea" type="number" step="0.25" />
-  <label>AYT Edebiyat</label><input id="ayt_edeb" type="number" step="0.25" />
-  <label>AYT Tarih-1</label><input id="ayt_tar1" type="number" step="0.25" />
-  <label>AYT Coğrafya-1</label><input id="ayt_cog1" type="number" step="0.25" />
+  <label>AYT Matematik</label>
+  <div class="dywrap"><input id="ayt_mat_ea_d" class="dy dy-d" type="number" step="1" placeholder="D" inputmode="numeric" /><input id="ayt_mat_ea_y" class="dy dy-y" type="number" step="1" placeholder="Y" inputmode="numeric" /><input id="ayt_mat_ea" type="number" step="0.25" /></div>
+  <label>AYT Edebiyat</label>
+  <div class="dywrap"><input id="ayt_edeb_d" class="dy dy-d" type="number" step="1" placeholder="D" inputmode="numeric" /><input id="ayt_edeb_y" class="dy dy-y" type="number" step="1" placeholder="Y" inputmode="numeric" /><input id="ayt_edeb" type="number" step="0.25" /></div>
+  <label>AYT Tarih-1</label>
+  <div class="dywrap"><input id="ayt_tar1_d" class="dy dy-d" type="number" step="1" placeholder="D" inputmode="numeric" /><input id="ayt_tar1_y" class="dy dy-y" type="number" step="1" placeholder="Y" inputmode="numeric" /><input id="ayt_tar1" type="number" step="0.25" /></div>
+  <label>AYT Coğrafya-1</label>
+  <div class="dywrap"><input id="ayt_cog1_d" class="dy dy-d" type="number" step="1" placeholder="D" inputmode="numeric" /><input id="ayt_cog1_y" class="dy dy-y" type="number" step="1" placeholder="Y" inputmode="numeric" /><input id="ayt_cog1" type="number" step="0.25" /></div>
 </div>
 
 <div id="grp_soz" class="grp" style="display:none">
   <b>AYT (SÖZ)</b>
-  <label>AYT Edebiyat</label><input id="ayt_edeb_soz" type="number" step="0.25" />
-  <label>AYT Tarih-1</label><input id="ayt_tar1_soz" type="number" step="0.25" />
-  <label>AYT Coğrafya-1</label><input id="ayt_cog1_soz" type="number" step="0.25" />
-  <label>AYT Tarih-2</label><input id="ayt_tar2" type="number" step="0.25" />
-  <label>AYT Coğrafya-2</label><input id="ayt_cog2" type="number" step="0.25" />
-  <label>AYT Felsefe Grubu</label><input id="ayt_fels" type="number" step="0.25" />
-  <label>AYT DKAB</label><input id="ayt_dkab" type="number" step="0.25" />
+  <label>AYT Edebiyat</label>
+  <div class="dywrap"><input id="ayt_edeb_soz_d" class="dy dy-d" type="number" step="1" placeholder="D" inputmode="numeric" /><input id="ayt_edeb_soz_y" class="dy dy-y" type="number" step="1" placeholder="Y" inputmode="numeric" /><input id="ayt_edeb_soz" type="number" step="0.25" /></div>
+  <label>AYT Tarih-1</label>
+  <div class="dywrap"><input id="ayt_tar1_soz_d" class="dy dy-d" type="number" step="1" placeholder="D" inputmode="numeric" /><input id="ayt_tar1_soz_y" class="dy dy-y" type="number" step="1" placeholder="Y" inputmode="numeric" /><input id="ayt_tar1_soz" type="number" step="0.25" /></div>
+  <label>AYT Coğrafya-1</label>
+  <div class="dywrap"><input id="ayt_cog1_soz_d" class="dy dy-d" type="number" step="1" placeholder="D" inputmode="numeric" /><input id="ayt_cog1_soz_y" class="dy dy-y" type="number" step="1" placeholder="Y" inputmode="numeric" /><input id="ayt_cog1_soz" type="number" step="0.25" /></div>
+  <label>AYT Tarih-2</label>
+  <div class="dywrap"><input id="ayt_tar2_d" class="dy dy-d" type="number" step="1" placeholder="D" inputmode="numeric" /><input id="ayt_tar2_y" class="dy dy-y" type="number" step="1" placeholder="Y" inputmode="numeric" /><input id="ayt_tar2" type="number" step="0.25" /></div>
+  <label>AYT Coğrafya-2</label>
+  <div class="dywrap"><input id="ayt_cog2_d" class="dy dy-d" type="number" step="1" placeholder="D" inputmode="numeric" /><input id="ayt_cog2_y" class="dy dy-y" type="number" step="1" placeholder="Y" inputmode="numeric" /><input id="ayt_cog2" type="number" step="0.25" /></div>
+  <label>AYT Felsefe Grubu</label>
+  <div class="dywrap"><input id="ayt_fels_d" class="dy dy-d" type="number" step="1" placeholder="D" inputmode="numeric" /><input id="ayt_fels_y" class="dy dy-y" type="number" step="1" placeholder="Y" inputmode="numeric" /><input id="ayt_fels" type="number" step="0.25" /></div>
+  <label>AYT DKAB</label>
+  <div class="dywrap"><input id="ayt_dkab_d" class="dy dy-d" type="number" step="1" placeholder="D" inputmode="numeric" /><input id="ayt_dkab_y" class="dy dy-y" type="number" step="1" placeholder="Y" inputmode="numeric" /><input id="ayt_dkab" type="number" step="0.25" /></div>
 </div>
 
 <div id="grp_dil" class="grp" style="display:none">
   <b>YDT (DİL)</b>
-  <label>YDT Net</label><input id="ydt" type="number" step="0.25" />
+  <label>YDT Net</label>
+  <div class="dywrap"><input id="ydt_d" class="dy dy-d" type="number" step="1" placeholder="D" inputmode="numeric" /><input id="ydt_y" class="dy dy-y" type="number" step="1" placeholder="Y" inputmode="numeric" /><input id="ydt" type="number" step="0.25" /></div>
 </div>
 
 <button id="hesaplaBtn">HESAPLA</button>
@@ -619,67 +663,99 @@
     });
   })();
 </script>
+
+
 <script>
-/* =========================
-   YKS MAKSİMUM NET SINIRI
-   (ÇEKİRDEĞE DOKUNMAZ)
-========================= */
+/* =====================================================
+   YKS DOĞRU / YANLIŞ -> NET OTOMATİK (YKS motorunu bozmaz)
+   - Net input id'leri AYNI kalır (tyt_tr, ayt_mat, ...)
+   - Yeni alanlar: <id>_d ve <id>_y
+   - Kural: Net = D - Y/4
+   - Kural: D + Y <= maxSoru (aşarsa Y kısılır)
+   - Negatif net mümkün (D/Y sayıları negatif olamaz)
+===================================================== */
 (function(){
-  const LIMITS = {
-    tyt_tr: 40,
-    tyt_sos: 20,
-    tyt_mat: 40,
-    tyt_fen: 20,
-
-    ayt_mat: 40,
-    ayt_fiz: 14,
-    ayt_kim: 13,
-    ayt_bio: 13,
-
-    ayt_mat_ea: 40,
-    ayt_edeb: 24,
-    ayt_tar1: 10,
-    ayt_cog1: 6,
-
-    ayt_edeb_soz: 24,
-    ayt_tar1_soz: 10,
-    ayt_cog1_soz: 6,
-    ayt_tar2: 11,
-    ayt_cog2: 11,
-    ayt_fels: 12,
-    ayt_dkab: 6,
-
+  const MAXQ = {
+    tyt_tr: 40, tyt_sos: 20, tyt_mat: 40, tyt_fen: 20,
+    ayt_mat: 40, ayt_fiz: 14, ayt_kim: 13, ayt_bio: 13,
+    ayt_mat_ea: 40, ayt_edeb: 24, ayt_tar1: 10, ayt_cog1: 6,
+    ayt_edeb_soz: 24, ayt_tar1_soz: 10, ayt_cog1_soz: 6,
+    ayt_tar2: 11, ayt_cog2: 11, ayt_fels: 12, ayt_dkab: 6,
     ydt: 80
   };
 
-  function clampInput(e){
-    const id = e.target.id;
-    if (!LIMITS[id]) return;
-
-    const raw = (e.target.value || "").toString().replace(",", ".");
-    const n = Number(raw);
-    if (!Number.isFinite(n)) return;
-
-    if (n > LIMITS[id]) {
-      e.target.value = LIMITS[id];
-      if (window.setWarnline) {
-        setWarnline(
-          "⚠️ " + id.replace(/_/g," ").toUpperCase() +
-          " için maksimum net " + LIMITS[id] + " olabilir."
-        );
-      }
-    }
-    if (n < 0) e.target.value = 0;
+  function toInt(val){
+    const s = (val ?? "").toString().trim();
+    if (!s) return null;
+    const n = Number(s.replace(",", "."));
+    if (!Number.isFinite(n)) return null;
+    return Math.trunc(n);
   }
 
-  document.addEventListener("DOMContentLoaded", () => {
-    Object.keys(LIMITS).forEach(id => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.addEventListener("input", clampInput);
-      el.addEventListener("blur", clampInput);
-    });
-  });
+  function fmtNet(x){
+    // 0.25 adımlı; ama küsurat çıkarsa da düzgün yaz
+    const r = Math.round(x * 1000) / 1000;
+    return (Math.abs(r) < 1e-12) ? "0" : String(r);
+  }
+
+  function bindOne(id){
+    const netEl = document.getElementById(id);
+    const dEl = document.getElementById(id + "_d");
+    const yEl = document.getElementById(id + "_y");
+    if (!netEl || !dEl || !yEl) return;
+
+    const max = MAXQ[id];
+
+    function recalc(){
+      const dRaw = toInt(dEl.value);
+      const yRaw = toInt(yEl.value);
+
+      // İkisi de boşsa net manuel kalsın
+      if (dRaw === null && yRaw === null){
+        netEl.readOnly = false;
+        return;
+      }
+
+      let d = (dRaw === null) ? 0 : dRaw;
+      let y = (yRaw === null) ? 0 : yRaw;
+
+      // Doğru/yanlış negatif olamaz
+      if (d < 0) d = 0;
+      if (y < 0) y = 0;
+
+      // Üst limit (tek tek)
+      if (d > max) d = max;
+      if (y > max) y = max;
+
+      // D+Y aşarsa yanlış kıs
+      if (d + y > max){
+        y = Math.max(0, max - d);
+      }
+
+      // UI'ya geri yaz (düzeltme olduysa)
+      if (dRaw !== null && dEl.value !== String(d)) dEl.value = String(d);
+      if (yRaw !== null && yEl.value !== String(y)) yEl.value = String(y);
+
+      const net = d - (y / 4);
+      netEl.value = fmtNet(net);
+      netEl.readOnly = true;
+    }
+
+    dEl.addEventListener("input", recalc);
+    yEl.addEventListener("input", recalc);
+    dEl.addEventListener("blur", recalc);
+    yEl.addEventListener("blur", recalc);
+
+    // Sayfa ilk açılışında da hesapla
+    recalc();
+  }
+
+  function init(){
+    Object.keys(MAXQ).forEach(bindOne);
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+  else init();
 })();
 </script>
 
