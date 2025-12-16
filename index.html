@@ -817,6 +817,335 @@
     });
   })();
 </script>
+<script>
+/**
+ * LGS PATCH (APPEND-ONLY)
+ * - Mevcut tasarıma / YKS'ye dokunmaz.
+ * - LGS'de 20 -> 2,00 sorununu bitirir (Doğru/Yanlış tam sayı).
+ * - lgs.json'u kökten okur; yoksa ./data/lgs.json dener.
+ * - Excel mantığı: net = dogru - yanlis/3, puan = base + Σ(net*katsayi)
+ * - Yüzdelik: puan2yuzdelik listesinden "en yakın alt puan" (floor) mantığıyla.
+ */
+(function () {
+  const IDS = {
+    btnYKS: "sinavYKS",
+    btnLGS: "sinavLGS",
+    yksPanel: "yksPanel",
+    lgsPanel: "lgsPanel",
+
+    lgsRows: "lgsRows",
+    ilSelect: "lgsIl",
+
+    dogruTop: "lgsDogruTop",
+    yanlisTop: "lgsYanlisTop",
+    netTop: "lgsNetTop",
+
+    lgsPuan: "lgsPuan",
+    lgsYuz: "lgsYuzdelik",
+    btnHesapla: "btnLgsHesapla",
+
+    listsWrap: "lgsLists",
+    tblBirinci: "tblBirinci",
+    tblNakil: "tblNakil"
+  };
+
+  const el = (id) => document.getElementById(id);
+  const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
+  const isNum = (n) => Number.isFinite(n);
+
+  const toNumLoose = (v) => {
+    const s = (v ?? "").toString().trim().replace(",", ".");
+    if (!s) return NaN;
+    const n = Number(s);
+    return Number.isFinite(n) ? n : NaN;
+  };
+
+  const toIntLoose = (v) => {
+    const n = toNumLoose(v);
+    if (!Number.isFinite(n)) return NaN;
+    return Math.trunc(n);
+  };
+
+  // format: integer or 2-dec
+  const fmtInt = (n) => isNum(n) ? String(Math.trunc(n)) : "";
+  const fmt2 = (n) => isNum(n) ? (Math.round(n * 100) / 100).toFixed(2).replace(".", ",") : "";
+
+  async function fetchJsonSmart() {
+    const tries = ["./lgs.json", "./data/lgs.json"];
+    let lastErr = null;
+    for (const url of tries) {
+      try {
+        const r = await fetch(url, { cache: "no-store" });
+        if (!r.ok) throw new Error(url + " HTTP " + r.status);
+        return await r.json();
+      } catch (e) { lastErr = e; }
+    }
+    throw lastErr || new Error("lgs.json fetch failed");
+  }
+
+  function normalizeLgsData(raw) {
+    // Beklenen şema: { base_puan, yanlis_dogru_orani, tests:[{test,katsayi,max_soru}], puan2yuzdelik, okullar }
+    if (!raw || typeof raw !== "object") return null;
+
+    const base = Number(raw.base_puan);
+    const ydo = Number(raw.yanlis_dogru_orani);
+    const tests = Array.isArray(raw.tests) ? raw.tests : (Array.isArray(raw.testler) ? raw.testler : []);
+    const p2y = Array.isArray(raw.puan2yuzdelik) ? raw.puan2yuzdelik : [];
+    const okullar = Array.isArray(raw.okullar) ? raw.okullar : [];
+
+    return {
+      base_puan: isNum(base) ? base : 0,
+      yanlis_dogru_orani: isNum(ydo) && ydo > 0 ? ydo : 3,
+      tests: tests.map(t => ({
+        id: (t.id ?? "").toString() || (t.test ?? "").toString(),
+        test: (t.test ?? t.ad ?? t.name ?? "").toString().trim(),
+        katsayi: Number(t.katsayi),
+        max_soru: Number(t.max_soru ?? t.max_dogru ?? t.max ?? 0)
+      })).filter(t => t.test && isNum(t.katsayi) && isNum(t.max_soru) && t.max_soru > 0),
+      puan2yuzdelik: p2y.map(x => ({
+        puan: Number(x.puan ?? x.score ?? x.PUAN),
+        yuzdelik: Number(x.yuzdelik ?? x.percentile ?? x.YUZDELIK)
+      })).filter(x => isNum(x.puan) && isNum(x.yuzdelik)),
+      okullar: okullar
+    };
+  }
+
+  function buildRows(tests) {
+    const wrap = el(IDS.lgsRows);
+    if (!wrap) return;
+
+    wrap.innerHTML = "";
+    for (const t of tests) {
+      const row = document.createElement("div");
+      row.className = "lgsRow";
+
+      // TEST adı
+      const c0 = document.createElement("div");
+      c0.className = "cellTest";
+      c0.textContent = t.test;
+
+      // DOĞRU
+      const c1 = document.createElement("div");
+      const inpD = document.createElement("input");
+      inpD.className = "smallInput inpD";
+      inpD.type = "text";
+      inpD.inputMode = "numeric";
+      inpD.placeholder = "";          // 0,00 istemiyorsun
+      inpD.autocomplete = "off";
+      inpD.dataset.max = String(t.max_soru);
+
+      // YANLIŞ
+      const c2 = document.createElement("div");
+      const inpY = document.createElement("input");
+      inpY.className = "smallInput inpY";
+      inpY.type = "text";
+      inpY.inputMode = "numeric";
+      inpY.placeholder = "";
+      inpY.autocomplete = "off";
+      inpY.dataset.max = String(t.max_soru);
+
+      // NET (opsiyonel küsuratlı)
+      const c3 = document.createElement("div");
+      const inpN = document.createElement("input");
+      inpN.className = "smallInput inpN";
+      inpN.type = "text";
+      inpN.inputMode = "decimal";
+      inpN.placeholder = "";
+      inpN.autocomplete = "off";
+      inpN.dataset.max = String(t.max_soru);
+
+      c1.appendChild(inpD);
+      c2.appendChild(inpY);
+      c3.appendChild(inpN);
+
+      row.appendChild(c0);
+      row.appendChild(c1);
+      row.appendChild(c2);
+      row.appendChild(c3);
+
+      // test meta
+      row.dataset.katsayi = String(t.katsayi);
+      row.dataset.max = String(t.max_soru);
+      row.dataset.test = t.test;
+
+      // clamp: doğru/yanlış 0..max (tam sayı)
+      function clampDY(inp) {
+        const mx = Number(inp.dataset.max || "0");
+        const n = toIntLoose(inp.value);
+        if (!Number.isFinite(n)) return;
+        inp.value = fmtInt(clamp(n, 0, mx));
+      }
+
+      // doğru/yanlış değişince neti güncelle (net boşsa veya kullanıcı neti elle girmiyorsa)
+      function syncNetFromDY() {
+        const mx = Number(row.dataset.max || "0");
+        const d = toIntLoose(inpD.value);
+        const y = toIntLoose(inpY.value);
+        if (!Number.isFinite(d) && !Number.isFinite(y)) return;
+
+        const dd = Number.isFinite(d) ? d : 0;
+        const yy = Number.isFinite(y) ? y : 0;
+        const net = dd - (yy / 3);
+
+        // Net alanı: kullanıcı elle yazmışsa dokunma; boşsa doldur
+        if (!inpN.value.trim()) {
+          inpN.value = fmt2(clamp(net, -mx, mx));
+        }
+      }
+
+      // net elle girilirse doğru/yanlışla oynamayız (senin kuralın: ister DY, ister net)
+      function clampNet() {
+        const mx = Number(inpN.dataset.max || "0");
+        const n = toNumLoose(inpN.value);
+        if (!Number.isFinite(n)) return;
+        const cl = clamp(n, -mx, mx);
+        inpN.value = fmt2(cl);
+      }
+
+      inpD.addEventListener("input", () => { clampDY(inpD); syncNetFromDY(); });
+      inpY.addEventListener("input", () => { clampDY(inpY); syncNetFromDY(); });
+      inpN.addEventListener("input", () => { clampNet(); });
+
+      // ilk render: boş kalsın (0,00 yok)
+    }
+  }
+
+  function computeTotalsAndScore(lgs) {
+    const wrap = el(IDS.lgsRows);
+    if (!wrap) return null;
+
+    const rows = Array.from(wrap.querySelectorAll(".lgsRow"));
+    let dTop = 0, yTop = 0, nTop = 0;
+    let puan = lgs.base_puan;
+
+    for (const r of rows) {
+      const mx = Number(r.dataset.max || "0");
+      const k = Number(r.dataset.katsayi || "0");
+
+      const inpD = r.querySelector(".inpD");
+      const inpY = r.querySelector(".inpY");
+      const inpN = r.querySelector(".inpN");
+
+      const d = Number.isFinite(toIntLoose(inpD?.value)) ? toIntLoose(inpD.value) : 0;
+      const y = Number.isFinite(toIntLoose(inpY?.value)) ? toIntLoose(inpY.value) : 0;
+
+      let net;
+      const nManual = toNumLoose(inpN?.value);
+      if (Number.isFinite(nManual)) {
+        net = clamp(nManual, -mx, mx);
+      } else {
+        net = clamp(d - (y / lgs.yanlis_dogru_orani), -mx, mx);
+      }
+
+      dTop += d;
+      yTop += y;
+      nTop += net;
+
+      puan += net * k;
+    }
+
+    return {
+      dogruTop: dTop,
+      yanlisTop: yTop,
+      netTop: nTop,
+      puan: puan
+    };
+  }
+
+  function yuzdelikFloorLookup(lgs, puan) {
+    const arr = (lgs.puan2yuzdelik || []).slice().filter(x => isNum(x.puan) && isNum(x.yuzdelik));
+    if (!arr.length) return null;
+
+    // sort by puan ascending
+    arr.sort((a,b) => a.puan - b.puan);
+
+    // find greatest puan <= given
+    let lo = 0, hi = arr.length - 1;
+    if (puan < arr[0].puan) return arr[0].yuzdelik; // en üst (en iyi) taraf
+    if (puan >= arr[hi].puan) return arr[hi].yuzdelik;
+
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1;
+      const v = arr[mid].puan;
+      if (v === puan) return arr[mid].yuzdelik;
+      if (v < puan) lo = mid + 1;
+      else hi = mid - 1;
+    }
+    return hi >= 0 ? arr[hi].yuzdelik : null;
+  }
+
+  function fillIller(lgs) {
+    const sel = el(IDS.ilSelect);
+    if (!sel) return;
+
+    const okullar = lgs.okullar || [];
+    const iller = Array.from(new Set(okullar.map(o => (o.il || o.IL || o.sehir || o.şehir || "").toString().trim()).filter(Boolean))).sort((a,b)=>a.localeCompare(b,"tr"));
+    sel.innerHTML = "";
+    const opt0 = document.createElement("option");
+    opt0.value = "";
+    opt0.textContent = "İL SEÇ";
+    sel.appendChild(opt0);
+    for (const il of iller) {
+      const opt = document.createElement("option");
+      opt.value = il;
+      opt.textContent = il;
+      sel.appendChild(opt);
+    }
+  }
+
+  // --- INIT (LGS butonuna ilk basışta yükle) ---
+  let __LGS = null;
+  let __INIT_DONE = false;
+
+  async function initOnce() {
+    if (__INIT_DONE) return;
+    __INIT_DONE = true;
+
+    const raw = await fetchJsonSmart();
+    __LGS = normalizeLgsData(raw);
+    if (!__LGS || !__LGS.tests.length) throw new Error("lgs.json içinde tests/testler bulunamadı veya boş");
+
+    buildRows(__LGS.tests);
+    fillIller(__LGS);
+
+    // Hesapla butonu
+    const btn = el(IDS.btnHesapla);
+    if (btn) {
+      btn.addEventListener("click", () => {
+        const res = computeTotalsAndScore(__LGS);
+        if (!res) return;
+
+        const dTop = el(IDS.dogruTop), yTop = el(IDS.yanlisTop), nTop = el(IDS.netTop);
+        if (dTop) dTop.value = fmtInt(res.dogruTop);
+        if (yTop) yTop.value = fmtInt(res.yanlisTop);
+        if (nTop) nTop.value = fmt2(res.netTop);
+
+        const puanEl = el(IDS.lgsPuan);
+        if (puanEl) puanEl.value = fmt2(res.puan);
+
+        const yuz = yuzdelikFloorLookup(__LGS, res.puan);
+        const yuzEl = el(IDS.lgsYuz);
+        if (yuzEl) yuzEl.value = (yuz == null ? "" : fmt2(yuz));
+
+        const lists = el(IDS.listsWrap);
+        if (lists) lists.style.display = ""; // varsa liste alanını görünür yap
+      }, { passive: true });
+    }
+  }
+
+  // LGS sekmesine geçiş: mevcut toggle zaten sende var; biz sadece LGS init'i garanti altına alıyoruz.
+  function wireTabButtons() {
+    const bL = el(IDS.btnLGS);
+    if (bL) {
+      bL.addEventListener("click", () => {
+        initOnce().catch(err => console.error("LGS init:", err));
+      }, { passive: true });
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", wireTabButtons);
+})();
+</script>
 
 </body>
 </html>
