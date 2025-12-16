@@ -112,10 +112,6 @@ function parseCSV(text) {
     if (idxMin < 0) idxMin = 1;
     if (idxMax < 0) idxMax = 2;
   } else {
-    // Senin sheet görüntüsüne göre: A=PUAN, D=MIN, E=MAX gibi durumlar var.
-    // CSV üretiminde genelde 3 kolon olur; ama 4-5 kolon olursa:
-    // 1) ilk kolon puan
-    // 2) son iki kolon min/max
     start = 0;
   }
 
@@ -281,3 +277,131 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+
+/* =========================================================
+   LGS MODÜLÜ (YKS'YE KİLİTLİ — ASLA DOKUNMAZ)
+   - Bu blok sadece LGS elementleri varsa çalışır
+   - YKS id'lerine erişmez, YKS state'ini değiştirmez
+   ========================================================= */
+(function LGS_MODULE_LOCKED() {
+  const LGS_MAX = { TR: 20, MAT: 20, FEN: 20, INK: 10, DIN: 10, DIL: 10 };
+
+  const LGS_JSON_CANDIDATES = [
+    "./lgsjson.json",
+    "./lgs.json",
+    "./data/lgsjson.json",
+    "./data/lgs.json",
+    "./assets/lgsjson.json",
+    "./assets/lgs.json",
+    "./docs/lgsjson.json",
+    "./docs/lgs.json",
+    "../lgsjson.json",
+    "../lgs.json",
+  ];
+
+  const num = (id) => {
+    const el = document.getElementById(id);
+    if (!el) return null;
+    const raw = (el.value ?? "").toString().trim();
+    if (!raw) return null;
+    const n = Number(raw.replace(",", "."));
+    return Number.isFinite(n) ? n : null;
+  };
+
+  const netFromDY = (d, y) => (d || 0) - (y || 0) / 3;
+
+  const resolve = ({ dogru, yanlis, net, max }) => {
+    const hasDY =
+      (Number.isFinite(dogru) && dogru !== null && dogru !== 0) ||
+      (Number.isFinite(yanlis) && yanlis !== null && yanlis !== 0);
+
+    const d = Number.isFinite(dogru) ? dogru : 0;
+    const y = Number.isFinite(yanlis) ? yanlis : 0;
+
+    if (hasDY) {
+      if (d < 0 || y < 0) return { ok: false, msg: "Doğru/yanlış negatif olamaz." };
+      if (d + y > max) return { ok: false, msg: `Doğru+Yanlış (${d + y}) max soru (${max}) aşıyor.` };
+      return { ok: true, dogru: d, yanlis: y, net: netFromDY(d, y) };
+    }
+
+    const n = Number.isFinite(net) ? net : 0;
+    if (n < 0) return { ok: false, msg: "Net negatif olamaz." };
+    if (n > max) return { ok: false, msg: `Net (${n}) max soru (${max}) aşıyor.` };
+    return { ok: true, dogru: 0, yanlis: 0, net: n };
+  };
+
+  async function loadLgsJson() {
+    for (const rel of LGS_JSON_CANDIDATES) {
+      try {
+        const url = new URL(rel, window.location.href);
+        url.searchParams.set("v", String(Date.now()));
+        const res = await fetch(url.toString(), { cache: "no-store" });
+        if (!res.ok) continue;
+        const txt = await res.text();
+        const data = JSON.parse(txt);
+        return { ok: true, path: rel, data };
+      } catch (_) {}
+    }
+    return { ok: false, path: null, data: null };
+  }
+
+  function bindWhenReady() {
+    const btn = document.getElementById("lgsHesaplaBtn");
+    const out = document.getElementById("lgsSonuc");
+    if (!btn || !out) return; // LGS yoksa YKS'yi asla etkileme
+
+    // Birden fazla kez bağlanmasın
+    if (btn.__lgsBound) return;
+    btn.__lgsBound = true;
+
+    btn.addEventListener("click", async (ev) => {
+      // Form içindeyse sayfayı yenilemesin, başka click'lere karışmasın
+      try { ev.preventDefault(); } catch (_) {}
+      try { ev.stopPropagation(); } catch (_) {}
+
+      const tr  = resolve({ dogru: num("lgs_tr_d"),  yanlis: num("lgs_tr_y"),  net: num("lgs_tr_n"),  max: LGS_MAX.TR });
+      const mat = resolve({ dogru: num("lgs_mat_d"), yanlis: num("lgs_mat_y"), net: num("lgs_mat_n"), max: LGS_MAX.MAT });
+      const fen = resolve({ dogru: num("lgs_fen_d"), yanlis: num("lgs_fen_y"), net: num("lgs_fen_n"), max: LGS_MAX.FEN });
+      const ink = resolve({ dogru: num("lgs_ink_d"), yanlis: num("lgs_ink_y"), net: num("lgs_ink_n"), max: LGS_MAX.INK });
+      const din = resolve({ dogru: num("lgs_din_d"), yanlis: num("lgs_din_y"), net: num("lgs_din_n"), max: LGS_MAX.DIN });
+      const dil = resolve({ dogru: num("lgs_dil_d"), yanlis: num("lgs_dil_y"), net: num("lgs_dil_n"), max: LGS_MAX.DIL });
+
+      const firstBad =
+        (!tr.ok && { k: "TR",  m: tr.msg })  ||
+        (!mat.ok && { k: "MAT", m: mat.msg }) ||
+        (!fen.ok && { k: "FEN", m: fen.msg }) ||
+        (!ink.ok && { k: "İNK", m: ink.msg }) ||
+        (!din.ok && { k: "DİN", m: din.msg }) ||
+        (!dil.ok && { k: "DİL", m: dil.msg }) ||
+        null;
+
+      if (firstBad) {
+        out.textContent = `❌ ${firstBad.k}: ${firstBad.m}`;
+        return;
+      }
+
+      const total = tr.net + mat.net + fen.net + ink.net + din.net + dil.net;
+
+      // JSON yüklemesi (varsa)
+      const j = await loadLgsJson();
+
+      // YKS'ye dokunmadan sadece LGS alanına yaz
+      out.textContent =
+        `TR: ${tr.net.toFixed(3)} | MAT: ${mat.net.toFixed(3)} | FEN: ${fen.net.toFixed(3)} | ` +
+        `İNK: ${ink.net.toFixed(3)} | DİN: ${din.net.toFixed(3)} | DİL: ${dil.net.toFixed(3)}\n` +
+        `TOPLAM NET: ${total.toFixed(3)}` +
+        (j.ok ? `\n✅ JSON: ${j.path}` : `\n⚠️ JSON bulunamadı`);
+
+      // İleride lazım olursa (YKS’ye dokunmaz)
+      window.__LGS_DATA__ = j.data;
+      window.__LGS_INPUTS__ = { tr, mat, fen, ink, din, dil, totalNet: total };
+    });
+  }
+
+  // DOM hazır olunca bağla
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bindWhenReady);
+  } else {
+    bindWhenReady();
+  }
+})();
