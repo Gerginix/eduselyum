@@ -901,25 +901,21 @@
         });
 
         outPuan && (outPuan.value = fmtPuan(puan));
+
         const tab = (lgsData && (lgsData.puan2yuzdelik || lgsData.yuzdelik_tablosu)) || {};
-        // JSON anahtar uyumu (Excel → JSON): puanlar[] ↔ yuzdelikler[]
+        // JSON anahtar uyumu (Excel → JSON): scores/puanlar[] ↔ yuzdelikler[]
         const puanArr =
+          (Array.isArray(tab.scores) ? tab.scores :
           (Array.isArray(tab.puanlar) ? tab.puanlar :
-          (Array.isArray(tab.puan) ? tab.puan :
-          (Array.isArray(tab.puanlar2025) ? tab.puanlar2025 :
-          (Array.isArray(tab.scores) ? tab.scores : []))));
+          (Array.isArray(tab.puan) ? tab.puan : [])));
         const yuzArr =
           (Array.isArray(tab.yuzdelikler) ? tab.yuzdelikler :
-          (Array.isArray(tab.yuzdelik) ? tab.yuzdelik :
-          (Array.isArray(tab.yuzdelik2025) ? tab.yuzdelik2025 :
-          (Array.isArray(tab.yuzdelikler2025) ? tab.yuzdelikler2025 :
-          (Array.isArray(tab.yuzdeliklerGenel) ? tab.yuzdeliklerGenel : [])))));
+          (Array.isArray(tab.yuzdelik) ? tab.yuzdelik : []));
         const nakilArr =
           (Array.isArray(tab.yuzdelikNakil) ? tab.yuzdelikNakil :
           (Array.isArray(tab.yuzdelikNakiller) ? tab.yuzdelikNakiller :
           (Array.isArray(tab.nakil_yuzdelik) ? tab.nakil_yuzdelik :
           (Array.isArray(tab.nakil_yuzdelikler) ? tab.nakil_yuzdelikler : []))));
-
 
         if (puanArr.length && yuzArr.length){
           const i = nearestIndex(puanArr, puan);
@@ -948,7 +944,6 @@
           .trim();
       }
 
-
       function renderLists(yuzdelik, nakilYuz){
         const il = (ilSelect?.value || "").toString().trim();
 
@@ -966,13 +961,13 @@
         };
 
         const birinci = okullar
-          .filter(o => normIl((o.il ?? o.IL ?? o.Il ?? o.city ?? o.sehir ?? o["şehir"] ?? o.province ?? "")) === normIl(il) && Number.isFinite(getYuz(o)))
+          .filter(o => normIl(o.il) === normIl(il) && Number.isFinite(getYuz(o)))
           .map(o => ({...o, diff: Math.abs(getYuz(o) - yuzdelik)}))
           .sort((a,b)=>a.diff-b.diff)
           .slice(0, 12);
 
         const nakil = okullar
-          .filter(o => normIl((o.il ?? o.IL ?? o.Il ?? o.city ?? o.sehir ?? o["şehir"] ?? o.province ?? "")) === normIl(il) && Number.isFinite(getNakilYuz(o)))
+          .filter(o => normIl(o.il) === normIl(il) && Number.isFinite(getNakilYuz(o)))
           .map(o => ({...o, diff: Math.abs(getNakilYuz(o) - nakilYuz)}))
           .sort((a,b)=>a.diff-b.diff)
           .slice(0, 12);
@@ -980,16 +975,18 @@
         fillTable("tblBirinci", birinci, { yuzField: "yuzdelik2025", alt: ["yuzdelik_2025","yuzdelik"] });
         fillTable("tblNakil", nakil, { yuzField: "yuzdelikNakil2025", alt: ["nakil_yuzdelik_2025","nakil_yuzdelik","yuzdelikNakil"] });
 
+
         const birinciCount = birinci.length;
         const nakilCount = nakil.length;
         if ((birinciCount + nakilCount) === 0){
           listsWrap && (listsWrap.style.display = "none");
-          noteEl && (noteEl.textContent = "Seçtiğin il için liste bulunamadı. (İl adı yazımı/boşluk farkı varsa otomatik düzeltilecek.)");
+          noteEl && (noteEl.textContent = "Seçtiğin il için liste bulunamadı. (İl adı yazımı/boşluk farkı varsa otomatik düzeltilir.)");
         } else {
           listsWrap && (listsWrap.style.display = "");
           noteEl && (noteEl.textContent = "");
         }
-}
+
+      }
 
       function fillTable(tblId, rows, yuzKey){
         const tbl = document.getElementById(tblId);
