@@ -619,6 +619,69 @@
     });
   })();
 </script>
+<script>
+/* =========================
+   YKS MAKSİMUM NET SINIRI
+   (ÇEKİRDEĞE DOKUNMAZ)
+========================= */
+(function(){
+  const LIMITS = {
+    tyt_tr: 40,
+    tyt_sos: 20,
+    tyt_mat: 40,
+    tyt_fen: 20,
+
+    ayt_mat: 40,
+    ayt_fiz: 14,
+    ayt_kim: 13,
+    ayt_bio: 13,
+
+    ayt_mat_ea: 40,
+    ayt_edeb: 24,
+    ayt_tar1: 10,
+    ayt_cog1: 6,
+
+    ayt_edeb_soz: 24,
+    ayt_tar1_soz: 10,
+    ayt_cog1_soz: 6,
+    ayt_tar2: 11,
+    ayt_cog2: 11,
+    ayt_fels: 12,
+    ayt_dkab: 6,
+
+    ydt: 80
+  };
+
+  function clampInput(e){
+    const id = e.target.id;
+    if (!LIMITS[id]) return;
+
+    const raw = (e.target.value || "").toString().replace(",", ".");
+    const n = Number(raw);
+    if (!Number.isFinite(n)) return;
+
+    if (n > LIMITS[id]) {
+      e.target.value = LIMITS[id];
+      if (window.setWarnline) {
+        setWarnline(
+          "⚠️ " + id.replace(/_/g," ").toUpperCase() +
+          " için maksimum net " + LIMITS[id] + " olabilir."
+        );
+      }
+    }
+    if (n < 0) e.target.value = 0;
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    Object.keys(LIMITS).forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener("input", clampInput);
+      el.addEventListener("blur", clampInput);
+    });
+  });
+})();
+</script>
 
 </body>
 </html>
