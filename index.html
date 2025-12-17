@@ -261,23 +261,23 @@
       margin: 0 0 10px 0;
     }
     .dywrap > .dy{
-      width: 56px;
+      width: 101px; /* 56px -> %80 arttırıldı */
       padding: 8px;
       border: 1px solid #bbb;
       border-radius: var(--radius);
       box-sizing: border-box;
       font-size: 14px;
+      text-align:center;
     }
     .dywrap > input:not(.dy){
-      width: var(--control-w);
+      width: 101px; /* NET hücresi, Doğru/Yanlış ile aynı */
       padding: 8px;
       border: 1px solid #bbb;
       border-radius: var(--radius);
       box-sizing: border-box;
+      text-align:center;
     }
-
-  
-    /* === YKS / LGS MOD SEÇİMİ === */
+/* === YKS / LGS MOD SEÇİMİ === */
     .hidden{ display:none !important; }
 
     .modehint{
