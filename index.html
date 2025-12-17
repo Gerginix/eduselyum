@@ -1286,20 +1286,42 @@
     return state.rows.filter(r => String(r?.[ilIdx] ?? "").trim() === il);
   }
 
-  function bestPercentileForScore(rows, score) {
+  function bestPercentileForScore(allRows, score) {
+    // Excel kuralı (genel):
+    // 1) Önce, adayın PUAN'ı ile "kazanabildiği ilk okul"u bul (puan <= adayPuan içinde en yüksek puan).
+    // 2) Eğer hiç kazanabildiği okul yoksa, en yakın puanı bul (mutlak fark en küçük).
     const puanIdx = state.idx.puan;
     const yuzdeIdx = state.idx.yuzde;
     if (puanIdx < 0 || yuzdeIdx < 0) return null;
 
-    const eligible = rows
-      .map(r => ({ r, p: toNum(r?.[puanIdx]), y: toNum(r?.[yuzdeIdx]) }))
-      .filter(x => Number.isFinite(x.p) && x.p <= score && Number.isFinite(x.y));
+    const items = (allRows || [])
+      .map(r => ({ p: toNum(r?.[puanIdx]), y: toNum(r?.[yuzdeIdx]) }))
+      .filter(x => Number.isFinite(x.p) && Number.isFinite(x.y));
 
-    if (!eligible.length) return null;
+    if (!items.length) return null;
 
-    eligible.sort((a,b)=> b.p - a.p); // en zor (en yüksek taban) ama kazanabildiği ilk
-    return eligible[0].y;
+    // 1) kazanabildiği ilk okul (puan <= score içinde en yüksek puan)
+    let best = null;
+    for (const it of items){
+      if (it.p <= score){
+        if (!best || it.p > best.p) best = it;
+      }
+    }
+    if (best) return best.y;
+
+    // 2) hiç kazanamıyorsa: en yakın puan
+    let nearest = items[0];
+    let bestDiff = Math.abs(score - nearest.p);
+    for (let i=1;i<items.length;i++){
+      const d = Math.abs(score - items[i].p);
+      if (d < bestDiff){
+        bestDiff = d;
+        nearest = items[i];
+      }
+    }
+    return nearest.y;
   }
+
 
   function topList(rows, score, puanKeyIdx, limit=12) {
     if (puanKeyIdx < 0) return [];
@@ -1364,7 +1386,7 @@
       const puanEl = $("lgsPuan");
       if (puanEl) puanEl.textContent = score.toFixed(3).replace(".", ",");
 
-      const yuz = bestPercentileForScore(ilRows, score);
+      const yuz = bestPercentileForScore(state.rows, score);
       const yuzEl = $("lgsYuzde");
       if (yuzEl) yuzEl.textContent = (yuz == null ? "—" : String(yuz).replace(".", ","));
 
