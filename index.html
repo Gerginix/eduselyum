@@ -547,7 +547,7 @@
     </div>
 
     <div id="lgsListeBox" class="result hidden" style="margin-top:10px;">
-      <div style="font-weight:bold; margin-bottom:6px;">2025 verisine göre girebildiğin okullar (maks. 12)</div>
+      <div style="font-weight:bold; margin-bottom:6px;">Okul listeleri (maks. 12 + 12)</div>
       <ol id="lgsOkulListe" style="margin:0; padding-left:18px;"></ol>
     </div>
 
@@ -1356,7 +1356,14 @@
   }
 
 function renderLists(list1, list2) {
+    const lb0 = $("lgsListeBox");
     const box = $("lgsOkulListe");
+    if (!box) return;
+    if ((!list1 || list1.length===0) && (!list2 || list2.length===0)) {
+      box.innerHTML = "";
+      if (lb0) lb0.classList.add("hidden");
+      return;
+    }
     if (!box) return;
 
     const fmtPuan = (n) => (Number.isFinite(n) ? n.toFixed(3).replace(".", ",") : "");
@@ -1382,8 +1389,10 @@ function renderLists(list1, list2) {
     };
 
     box.innerHTML =
-      htmlList("1. Yerleştirme (2025 En Düşük % Dilim) — Maks. 12", list1, "% ") +
-      htmlList("Nakil / Son Yerleştirme (2025 En Düşük Nakil Sonrası % Dilim) — Maks. 12", list2, "% ");
+      htmlList("1. Yerleştirme (2025 PUAN) — Maks. 12", list1, "% ") +
+      htmlList("Nakil dönemi / Son yerleştirme (2025 2. YER. PUANI) — Maks. 12", list2, "% ");
+    const lb = $("lgsListeBox");
+    if (lb) lb.classList.remove("hidden");
   }
 
 function setWarn(msg) {
